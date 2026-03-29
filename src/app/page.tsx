@@ -37,9 +37,9 @@ const STEPS = ["Veteran Information", "Benefits Assessment", "Your Benefits", "F
 
 function StepIndicator({ currentStep }: { currentStep: number }) {
   return (
-    <nav aria-label="Progress" className="flex items-center justify-center mb-8" style={{ flexWrap: 'nowrap' }}>
+    <nav aria-label="Progress" className="flex items-center justify-center mb-8 gap-6 sm:gap-8" style={{ flexWrap: 'nowrap' }}>
       {STEPS.map((step, i) => (
-        <div key={i} className="flex items-center" style={{ flexShrink: 0 }}>
+        <div key={i} className="flex items-center gap-2" style={{ flexShrink: 0 }}>
           <div
             className="flex items-center justify-center rounded-full font-bold"
             role="status"
@@ -58,19 +58,16 @@ function StepIndicator({ currentStep }: { currentStep: number }) {
             {i < currentStep ? "\u2713" : i + 1}
           </div>
           <span
-            className="ml-1 hidden sm:inline"
+            className="hidden sm:inline"
             style={{
               color: i === currentStep ? brand.royal : brand.silver,
               fontWeight: i === currentStep ? 600 : 400,
-              fontSize: '11px',
+              fontSize: '12px',
               whiteSpace: 'nowrap',
             }}
           >
             {step}
           </span>
-          {i < STEPS.length - 1 && (
-            <div className="h-0.5 mx-1 sm:mx-2" aria-hidden="true" style={{ backgroundColor: brand.silver, width: '20px' }} />
-          )}
         </div>
       ))}
     </nav>
