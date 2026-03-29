@@ -33,7 +33,7 @@ const brand = {
 
 // ─── STEP INDICATOR ─────────────────────────────────────────────────────
 
-const STEPS = ["DD-214 Information", "Benefits Assessment", "Your Benefits", "Forms & Documents"];
+const STEPS = ["Veteran Information", "Benefits Assessment", "Your Benefits", "Forms & Documents"];
 
 function StepIndicator({ currentStep }: { currentStep: number }) {
   return (
@@ -473,6 +473,22 @@ function FormsAndDocs({ results, onBack }: { results: EligibilityResults; onBack
   );
 }
 
+// ─── VA LOGO COMPONENT ─────────────────────────────────────────────────
+
+function VALogo() {
+  return (
+    <svg width="44" height="44" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="U.S. Department of Veterans Affairs" role="img">
+      <circle cx="50" cy="50" r="48" fill="#003F72" stroke="#B7A369" strokeWidth="3" />
+      <circle cx="50" cy="50" r="40" fill="none" stroke="#B7A369" strokeWidth="1.5" />
+      <text x="50" y="42" textAnchor="middle" fontFamily="serif" fontSize="30" fontWeight="700" fill="white" letterSpacing="-1">VA</text>
+      <text x="50" y="56" textAnchor="middle" fontFamily="sans-serif" fontSize="6.5" fontWeight="600" fill="#B7A369" letterSpacing="0.5">U.S. DEPARTMENT OF</text>
+      <text x="50" y="65" textAnchor="middle" fontFamily="sans-serif" fontSize="6.5" fontWeight="600" fill="#B7A369" letterSpacing="0.5">VETERANS AFFAIRS</text>
+      <line x1="22" y1="70" x2="78" y2="70" stroke="#B7A369" strokeWidth="0.8" />
+      <path d="M45 75 L50 85 L55 75" fill="none" stroke="#B7A369" strokeWidth="1.5" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 // ─── AQUIA LOGO COMPONENT ───────────────────────────────────────────────
 
 function AquiaLogo() {
@@ -517,6 +533,7 @@ export default function Home() {
       <header style={{ backgroundColor: brand.white, borderBottom: `1px solid ${brand.silver}`, boxShadow: '0 1px 3px rgba(3,9,64,0.06)' }}>
         <div className="max-w-4xl mx-auto px-4 py-4 sm:py-5">
           <div className="flex items-center gap-3">
+            <VALogo />
             <AquiaLogo />
             <div>
               <h1 className="text-xl sm:text-2xl font-bold" style={{ color: brand.midnight }}>VetsPath</h1>
