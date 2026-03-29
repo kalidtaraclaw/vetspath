@@ -1,0 +1,113 @@
+{
+  "id": "cpt-martinez",
+  "label": "CPT Rafael Martinez — Army, Iraq (OIF), Burn Pits, Tinnitus",
+  "dd214": {
+    "name": "Martinez, Rafael J.",
+    "branch": "Army",
+    "mos": "12B — Combat Engineer",
+    "rank": "O-3 / CPT",
+    "enteredActiveDuty": "2005-06-15",
+    "separationDate": "2017-09-30",
+    "characterOfDischarge": "Honorable",
+    "decorations": "Bronze Star Medal, Army Commendation Medal (2), Iraq Campaign Medal with 3 Campaign Stars, Combat Action Badge, Global War on Terrorism Service Medal, National Defense Service Medal",
+    "dutyLocations": "Fort Leonard Wood MO, Camp Liberty Iraq, FOB Hammer Iraq, Joint Base Lewis-McChord WA, Camp Arifjan Kuwait",
+    "remarks": "Completed three deployments to Iraq (OIF 06-08, OIF 09-10, OIF 11). Served as route clearance platoon leader and company commander. Documented burn pit exposure at FOB Hammer and Camp Liberty per DoD Airborne Hazards Open Burn Pit Registry. Member of Burn Pit Registry.",
+    "narrativeReason": "Completion of Required Active Service",
+    "totalServiceMonths": 147
+  },
+  "medicalRecords": {
+    "vaRecords": [
+      {
+        "date": "2018-02-14",
+        "provider": "VA Puget Sound Health Care System",
+        "type": "Initial Primary Care",
+        "diagnosis": ["Chronic low back pain (M54.5)", "Tinnitus, bilateral (H93.19)"],
+        "notes": "Patient reports persistent lower back pain since 2009 IED blast. Ringing in both ears constant since Iraq deployments. Began after repeated exposure to IED blasts and heavy equipment. MRI lumbar spine ordered."
+      },
+      {
+        "date": "2018-03-22",
+        "provider": "VA Puget Sound Health Care System",
+        "type": "MRI Results / Orthopedic Consult",
+        "diagnosis": ["Lumbar disc herniation L4-L5 (M51.16)", "Lumbar radiculopathy (M54.17)"],
+        "notes": "MRI confirms L4-L5 disc herniation with mild nerve root impingement. Consistent with blast injury mechanism described by patient. Physical therapy referral placed. Patient reports pain at 6/10 on average, 8/10 on bad days."
+      },
+      {
+        "date": "2018-05-10",
+        "provider": "VA Puget Sound — Mental Health",
+        "type": "Mental Health Intake",
+        "diagnosis": ["PTSD, chronic (F43.12)", "Major Depressive Disorder, recurrent, moderate (F33.1)"],
+        "notes": "Patient screened positive on PCL-5 (score: 58). Reports nightmares 3-4x/week, hypervigilance, avoidance of crowded places, difficulty concentrating. Onset traced to 2007 deployment when his vehicle was hit by an IED killing one soldier. Also reports persistent low mood, loss of interest, sleep disturbance. Started on sertraline 50mg and referred to PTSD clinical team."
+      },
+      {
+        "date": "2018-08-15",
+        "provider": "VA Puget Sound — Audiology",
+        "type": "Audiology Evaluation",
+        "diagnosis": ["Sensorineural hearing loss, bilateral (H90.3)", "Tinnitus, bilateral (H93.19)"],
+        "notes": "Pure tone audiometry shows mild-to-moderate sensorineural hearing loss bilaterally, worse at 4000-6000 Hz. Pattern consistent with noise-induced hearing loss. Patient's MOS (12B Combat Engineer) involved repeated exposure to explosions, heavy machinery, and weapons fire. Hearing aids recommended. Tinnitus rated as constant, moderate severity, significantly impacts sleep."
+      },
+      {
+        "date": "2019-01-20",
+        "provider": "VA Puget Sound — Pulmonology",
+        "type": "Pulmonary Function Test",
+        "diagnosis": ["Chronic rhinosinusitis (J32.9)", "Mild restrictive lung defect — pending further evaluation"],
+        "notes": "Patient reports chronic sinus congestion and intermittent shortness of breath since Iraq service. Documented burn pit exposure at FOB Hammer (2007-2008) and Camp Liberty (2009-2010). PFT shows mild restrictive pattern. CT sinuses shows mucosal thickening consistent with chronic sinusitis. Patient enrolled in VA Airborne Hazards and Open Burn Pit Registry."
+      }
+    ],
+    "privateRecords": [
+      {
+        "date": "2020-06-12",
+        "provider": "Dr. Sarah Chen, Tacoma Orthopedic Associates",
+        "type": "Orthopedic Evaluation",
+        "diagnosis": ["Chronic lumbar radiculopathy (M54.17)", "Left knee osteoarthritis (M17.12)"],
+        "notes": "Patient referred for second opinion on back pain management. Concurs with VA diagnosis. Also notes left knee crepitus and reduced ROM — patient attributes to years of carrying heavy equipment and route clearance operations. X-ray shows early degenerative changes. Recommends continued PT and possible epidural injection for back."
+      },
+      {
+        "date": "2021-03-08",
+        "provider": "Dr. James Whitfield, Pacific Northwest Psychiatry",
+        "type": "Psychiatric Evaluation — Nexus Letter",
+        "diagnosis": ["PTSD, chronic, combat-related (F43.12)", "Major Depressive Disorder secondary to PTSD (F33.1)", "Insomnia disorder (G47.00)"],
+        "notes": "Independent medical opinion requested for VA disability claim. It is my professional opinion, stated to a reasonable degree of medical certainty, that CPT Martinez's PTSD is directly caused by his combat service in Iraq, specifically the IED attack of March 2007 and sustained combat operations over three deployments. His depression is at least as likely as not secondary to his PTSD. His insomnia is a direct symptom of both conditions. Current GAF: 48."
+      }
+    ],
+    "summary": {
+      "conditions": [
+        "PTSD (combat-related, chronic)",
+        "Major Depressive Disorder (secondary to PTSD)",
+        "Chronic low back pain / L4-L5 disc herniation",
+        "Lumbar radiculopathy",
+        "Bilateral tinnitus",
+        "Bilateral sensorineural hearing loss",
+        "Left knee osteoarthritis",
+        "Chronic rhinosinusitis (burn pit related)",
+        "Mild restrictive lung defect (burn pit related)",
+        "Insomnia disorder"
+      ],
+      "presumptiveExposures": ["Burn pits (FOB Hammer, Camp Liberty — Iraq)", "Noise exposure (MOS 12B Combat Engineer)"],
+      "currentMedications": ["Sertraline 100mg daily", "Naproxen 500mg as needed", "Trazodone 50mg at bedtime", "Fluticasone nasal spray daily"],
+      "functionalImpact": "Patient reports difficulty sitting or standing for more than 30 minutes. Ringing in ears disrupts sleep and concentration. Avoids crowds and loud environments. Nightmares cause sleep disruption 3-4 nights per week. States he had to leave a management position in 2020 because he could not handle the stress and concentration demands."
+    }
+  },
+  "questionnaire": {
+    "conditions": [
+      "PTSD",
+      "Depression",
+      "Lower back pain / disc herniation",
+      "Tinnitus",
+      "Hearing loss",
+      "Left knee pain",
+      "Chronic sinus problems",
+      "Breathing issues",
+      "Insomnia"
+    ],
+    "hasPTSD": true,
+    "hasTBI": false,
+    "hasTinnitus": true,
+    "hasHearingLoss": true,
+    "hasPrivateMedical": true,
+    "hasVARecords": true,
+    "hasBuddyStatements": true,
+    "cannotWork": true,
+    "disabilityRating": 0,
+    "hasFiledIntentToFile": false
+  }
+}

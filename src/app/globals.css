@@ -1,3 +1,114 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+  /* Aquia Brand — Backgrounds */
+  --bg-off-white: #FAFAFA;
+  --bg-white: #FFFFFF;
+  --bg-ice-blue: #E7F1FB;
+
+  /* Aquia Brand — Foreground / Primary */
+  --midnight-navy: #030940;
+  --royal-navy: #050F69;
+
+  /* Aquia Brand — Accents */
+  --azure-blue: #2071C6;
+  --sky-blue: #68B4E7;
+  --silver-gray: #CECBD2;
+
+  /* Aquia Brand — Data Viz Only */
+  --burnt-orange: #CC5800;
+  --crimson: #E11A0C;
+  --amber-gold: #FFC107;
+  --amethyst: #7751A8;
+}
+
+body {
+  font-family: 'Poppins', sans-serif;
+  background-color: var(--bg-off-white);
+  color: var(--midnight-navy);
+}
+
+/* Accessibility enhancements */
+a:focus,
+button:focus,
+input:focus,
+select:focus,
+textarea:focus {
+  outline: 3px solid var(--azure-blue);
+  outline-offset: 2px;
+}
+
+/* Screen reader only content */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+.sr-only:focus {
+  position: static;
+  width: auto;
+  height: auto;
+  padding: inherit;
+  margin: inherit;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+  background-color: var(--azure-blue);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 4px;
+  z-index: 9999;
+}
+
+/* Improve contrast for focus indicators */
+:focus-visible {
+  outline: 3px solid var(--azure-blue);
+  outline-offset: 2px;
+}
+
+/* Ensure proper color contrast */
+input,
+textarea,
+select {
+  background-color: var(--bg-white);
+  color: var(--midnight-navy);
+  border-color: var(--silver-gray);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--silver-gray);
+  opacity: 1;
+}
+
+/* Ensure disabled states are visible */
+input:disabled,
+textarea:disabled,
+select:disabled,
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Link focus styling */
+a {
+  outline-offset: 2px;
+}
+
+/* Reduce motion for those who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

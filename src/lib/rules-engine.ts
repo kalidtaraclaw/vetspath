@@ -1,5 +1,6 @@
 // ─── VA RULES ENGINE ────────────────────────────────────────────────────
-// Core business logic for evaluating veteran benefits eligibility
+// Comprehensive business logic for evaluating veteran benefits eligibility
+// Covers: disability compensation, healthcare, education, home loan, vocational rehab, and specialized benefits
 
 export interface DD214Data {
   name: string;
@@ -17,6 +18,7 @@ export interface DD214Data {
 }
 
 export interface QuestionnaireData {
+  // Existing fields
   conditions: string[];
   hasPTSD: boolean;
   hasTBI: boolean;
@@ -28,6 +30,32 @@ export interface QuestionnaireData {
   cannotWork: boolean;
   disabilityRating: number;
   hasFiledIntentToFile: boolean;
+
+  // New fields: Camp Lejeune
+  servedCampLejeune?: boolean;
+  campLejeuneConditions?: string[];
+
+  // New fields: Radiation exposure
+  radiationExposure?: boolean;
+  radiationActivity?: string; // e.g., "nuclear tests", "Hiroshima", "Enewetak", etc.
+  burnPitExposure?: boolean;
+  otherExposure?: boolean;
+
+  // New fields: Military Sexual Trauma
+  experiencedMST?: boolean;
+  mstConditions?: string[];
+
+  // New fields: Secondary conditions
+  hasSecondaryConditions?: boolean;
+  secondaryPairs?: Array<{ primary: string; secondary: string }>;
+
+  // New fields: Benefits interests
+  interestedHomeLoan?: boolean;
+  interestedVocRehab?: boolean;
+
+  // New fields: Aid & Attendance
+  needsAidAttendance?: boolean;
+  aidAttendanceNeeds?: string[];
 }
 
 export interface FormRecommendation {
@@ -57,6 +85,10 @@ export interface EligibilityResults {
   disabilityComp: BenefitResult;
   healthcare: BenefitResult;
   education: BenefitResult;
+  homeLoan: BenefitResult;
+  vocRehab: BenefitResult;
+  aidAttendance: BenefitResult;
+  secondaryConditions: BenefitResult;
   warnings: string[];
   recommendations: string[];
 }
@@ -109,8 +141,77 @@ export const PRESUMPTIVE_CONDITIONS: Record<string, {
     label: "Noise Exposure (MOS-based)",
     triggerMOS: ["11B","11C","13B","13F","19D","19K","12B","68W","15T","15U","15R","92F","88M","91B","94E"],
     conditions: ["Tinnitus", "Bilateral Hearing Loss", "Sensorineural Hearing Loss"]
+  },
+  campLejeune: {
+    label: "Camp Lejeune Water Contamination",
+    triggerLocations: ["Camp Lejeune", "MCAS New River"],
+    triggerDateRange: { start: "1953-08-01", end: "1987-12-31" },
+    conditions: [
+      "Adult leukemia", "Aplastic anemia", "Myelodysplastic syndromes",
+      "Bladder cancer", "Kidney cancer", "Liver cancer", "Multiple myeloma",
+      "Non-Hodgkin's lymphoma", "Parkinson's disease"
+    ]
+  },
+  radiation: {
+    label: "Radiation Exposure (Atomic Veterans)",
+    triggerLocations: ["Nevada", "Pacific Ocean", "Japan", "Enewetak Atoll", "Greenland"],
+    triggerDateRange: { start: "1945-01-01", end: "1980-12-31" },
+    conditions: [
+      "Bile duct cancer", "Bone cancer", "Brain cancer", "Breast cancer",
+      "Colon cancer", "Esophageal cancer", "Gallbladder cancer", "Liver cancer",
+      "Lung cancer", "Pancreatic cancer", "Pharyngeal cancer", "Ovarian cancer",
+      "Salivary gland cancer", "Small intestine cancer", "Stomach cancer",
+      "Thyroid cancer", "Urinary tract cancer"
+    ]
   }
 };
+
+export const SECONDARY_CONDITION_PAIRS: Array<{
+  primary: string;
+  secondaries: string[];
+  explanation: string;
+}> = [
+  {
+    primary: "Back injury / chronic pain",
+    secondaries: ["Depression", "Anxiety", "Sleep disorders", "Radiculopathy"],
+    explanation: "Chronic pain frequently causes or worsens mental health conditions"
+  },
+  {
+    primary: "Diabetes (Type 2)",
+    secondaries: ["Peripheral neuropathy", "Vision problems (retinopathy)", "Kidney disease (nephropathy)", "Erectile dysfunction"],
+    explanation: "Diabetes damages nerves and blood vessels throughout the body"
+  },
+  {
+    primary: "PTSD",
+    secondaries: ["Substance use disorder", "Sleep apnea", "Depression", "Anxiety", "Hypertension"],
+    explanation: "PTSD's chronic stress response affects multiple body systems"
+  },
+  {
+    primary: "Knee injury",
+    secondaries: ["Hip problems", "Gait disorders", "Lower back pain", "Opposite knee condition"],
+    explanation: "Compensating for knee pain changes biomechanics"
+  },
+  {
+    primary: "Hearing loss",
+    secondaries: ["Tinnitus", "Depression", "Social isolation"],
+    explanation: "Hearing loss commonly co-occurs with tinnitus and impacts mental health"
+  },
+  {
+    primary: "TBI / head injury",
+    secondaries: ["Migraines/headaches", "Vision problems", "Cognitive disorders", "Depression", "Sleep disorders"],
+    explanation: "TBI can cause widespread neurological effects"
+  },
+  {
+    primary: "Neck injury",
+    secondaries: ["Headaches", "Radiculopathy", "Vision problems"],
+    explanation: "Cervical spine issues frequently radiate to head and extremities"
+  },
+  {
+    primary: "Medication side effects",
+    secondaries: ["Gastrointestinal conditions", "Weight gain", "Sexual dysfunction", "Liver/kidney issues"],
+    explanation: "Medications for SC conditions can cause new compensable conditions"
+  }
+];
 
 export const MOS_DESCRIPTIONS: Record<string, string> = {
   "11B": "Infantryman", "11C": "Indirect Fire Infantryman", "13B": "Cannon Crewmember",
@@ -156,6 +257,10 @@ export function evaluateEligibility(dd214: DD214Data, questionnaire: Partial<Que
     disabilityComp: { eligible: false, details: [], forms: [], docs: [], presumptiveConditions: [] },
     healthcare: { eligible: false, details: [], forms: [], docs: [], priorityGroup: null },
     education: { eligible: false, details: [], forms: [], docs: [], tier: null },
+    homeLoan: { eligible: false, details: [], forms: [], docs: [] },
+    vocRehab: { eligible: false, details: [], forms: [], docs: [] },
+    aidAttendance: { eligible: false, details: [], forms: [], docs: [] },
+    secondaryConditions: { eligible: false, details: [], forms: [], docs: [] },
     warnings: [],
     recommendations: []
   };
@@ -164,6 +269,7 @@ export function evaluateEligibility(dd214: DD214Data, questionnaire: Partial<Que
   const isHonorable = discharge === "Honorable";
   const isGeneral = discharge === "General (Under Honorable Conditions)";
   const isOTH = discharge === "Other Than Honorable";
+  const isBadConduct = discharge === "Bad Conduct";
 
   // Gate check: Dishonorable
   if (discharge === "Dishonorable") {
@@ -171,18 +277,25 @@ export function evaluateEligibility(dd214: DD214Data, questionnaire: Partial<Que
     return results;
   }
 
-  if (discharge === "Bad Conduct") {
+  if (isBadConduct) {
     results.warnings.push("A Bad Conduct Discharge may still allow some VA benefits through a Character of Service determination. The VA reviews your full service record. Consider consulting a VSO.");
   }
 
   const serviceStart = new Date(dd214.enteredActiveDuty);
   const serviceEnd = new Date(dd214.separationDate);
 
+  // Calculate service duration
+  const serviceDays = Math.floor((serviceEnd.getTime() - serviceStart.getTime()) / (24 * 60 * 60 * 1000));
+  const isWartimeService = isWartimeEra(serviceStart, serviceEnd);
+
   // ── DISABILITY COMPENSATION ──────────────────────────────────────────
-  if (isHonorable || isGeneral || isOTH) {
+  if (isHonorable || isGeneral || isOTH || isBadConduct) {
     results.disabilityComp.eligible = true;
     if (isOTH) {
       results.disabilityComp.details.push("With an OTH discharge, eligibility requires a favorable Character of Service determination by the VA (expanded access since June 2024).");
+    }
+    if (isBadConduct) {
+      results.disabilityComp.details.push("With a Bad Conduct Discharge, eligibility requires a favorable Character of Service determination by the VA. The VA reviews your full service record on a case-by-case basis.");
     }
     results.disabilityComp.details.push("You may be eligible for disability compensation for any condition caused or worsened by your military service.");
 
@@ -234,6 +347,18 @@ export function evaluateEligibility(dd214: DD214Data, questionnaire: Partial<Que
       results.recommendations.push("You have presumptive condition eligibility — these conditions do NOT require a nexus letter, making claims significantly easier.");
     }
 
+    // MST handling
+    if (questionnaire?.experiencedMST) {
+      results.disabilityComp.forms.push({
+        form: "VA Form 21-0781",
+        name: "Statement in Support of Claim for PTSD (Military Sexual Trauma)",
+        reason: "Special form for MST cases. NOTE: You do NOT need an official incident report. The VA accepts behavioral change markers and fear responses as evidence.",
+        priority: "critical"
+      });
+      results.disabilityComp.details.push("Military Sexual Trauma (MST) has special evidence rules: You don't need a formal report of the incident. The VA recognizes behavioral changes, anxiety, fear of others, etc. as evidence of trauma.");
+      results.recommendations.push("MST claims have special consideration: you do NOT need official documentation of the incident. Behavioral changes and your own statement are often sufficient evidence.");
+    }
+
     if (questionnaire?.hasPTSD) {
       results.disabilityComp.forms.push({
         form: "VA Form 21-0781", name: "PTSD Statement",
@@ -267,10 +392,13 @@ export function evaluateEligibility(dd214: DD214Data, questionnaire: Partial<Que
   }
 
   // ── HEALTHCARE ───────────────────────────────────────────────────────
-  if (isHonorable || isGeneral || isOTH) {
+  if (isHonorable || isGeneral || isOTH || isBadConduct) {
     results.healthcare.eligible = true;
     if (isOTH) {
       results.healthcare.details.push("OTH discharge: The VA may still grant healthcare access via Character of Service determination (expanded June 2024 rules).");
+    }
+    if (isBadConduct) {
+      results.healthcare.details.push("Bad Conduct Discharge: The VA may grant healthcare access via Character of Service determination. Mental health care for conditions related to MST is available regardless of discharge type.");
     }
     results.healthcare.forms.push({
       form: "VA Form 10-10EZ", name: "Healthcare Enrollment",
@@ -313,14 +441,28 @@ export function evaluateEligibility(dd214: DD214Data, questionnaire: Partial<Que
   if (isHonorable) {
     const post911Start = new Date("2001-09-10");
     const totalMonths = dd214.totalServiceMonths || Math.round((serviceEnd.getTime() - serviceStart.getTime()) / (30.44 * 24 * 60 * 60 * 1000));
+    const isDisabilityDischarge = dd214.narrativeReason?.toLowerCase().includes("disability");
 
     if (serviceEnd > post911Start) {
       const post911Months = Math.round(
         (Math.min(serviceEnd.getTime(), Date.now()) - Math.max(serviceStart.getTime(), post911Start.getTime())) / (30.44 * 24 * 60 * 60 * 1000)
       );
-      const tier = GI_BILL_TIERS.find(t => post911Months >= t.months) || GI_BILL_TIERS[GI_BILL_TIERS.length - 1];
 
-      if (post911Months >= 3) {
+      // Disability separation grants 100% GI Bill regardless of service length
+      if (isDisabilityDischarge) {
+        results.education.eligible = true;
+        results.education.tier = { months: 0, percentage: 100 };
+        results.education.details.push("Your separation for disability qualifies you for 100% Post-9/11 GI Bill benefits regardless of service length.");
+        results.education.details.push("This covers 100% of tuition/fees, monthly housing allowance, and $1,000/year book stipend.");
+        results.education.forms.push({
+          form: "VA Form 22-1990", name: "Education Benefits Application",
+          reason: "Application for GI Bill education benefits",
+          priority: "primary"
+        });
+        results.education.docs.push("DD-214");
+        results.education.docs.push("School enrollment letter or acceptance letter");
+      } else if (post911Months >= 3) {
+        const tier = GI_BILL_TIERS.find(t => post911Months >= t.months) || GI_BILL_TIERS[GI_BILL_TIERS.length - 1];
         results.education.eligible = true;
         results.education.tier = tier;
         results.education.details.push(`Post-9/11 GI Bill (Chapter 33): Eligible at ${tier.percentage}% based on ~${post911Months} months of post-9/11 service.`);
@@ -332,11 +474,6 @@ export function evaluateEligibility(dd214: DD214Data, questionnaire: Partial<Que
         });
         results.education.docs.push("DD-214");
         results.education.docs.push("School enrollment letter or acceptance letter");
-
-        if (dd214.narrativeReason?.toLowerCase().includes("disability")) {
-          results.education.details.push("Your separation for disability qualifies you for 100% GI Bill benefits regardless of service length.");
-          results.education.tier = { months: 0, percentage: 100 };
-        }
       }
     }
 
@@ -347,6 +484,135 @@ export function evaluateEligibility(dd214: DD214Data, questionnaire: Partial<Que
     results.education.eligible = false;
     results.education.details.push("The GI Bill requires an Honorable discharge. A General (Under Honorable Conditions) discharge does not qualify for education benefits.");
     results.warnings.push("Consider applying for a discharge upgrade — if successful, it would unlock GI Bill eligibility. Contact your branch's Discharge Review Board.");
+  }
+
+  // ── HOME LOAN ────────────────────────────────────────────────────────
+  if (isHonorable || isGeneral) {
+    const qualifiesForHomeLoan =
+      (isWartimeService && serviceDays >= 90) ||
+      (!isWartimeService && serviceDays >= 181) ||
+      (dd214.narrativeReason?.toLowerCase().includes("disability"));
+
+    if (qualifiesForHomeLoan) {
+      results.homeLoan.eligible = true;
+      results.homeLoan.details.push("You qualify for a VA home loan — this is one of the most valuable veteran benefits and many veterans don't realize they have it.");
+      results.homeLoan.details.push("VA loans offer: no down payment, no PMI, typically lower interest rates, and favorable terms.");
+
+      const hasDisabilityOrPurpleHeart = (questionnaire?.disabilityRating || 0) > 0 || (dd214.decorations || "").toLowerCase().includes("purple heart");
+      if (hasDisabilityOrPurpleHeart) {
+        results.homeLoan.details.push("IMPORTANT: You qualify for a funding fee exemption due to your disability rating or Purple Heart. This saves you thousands.");
+      } else {
+        results.homeLoan.details.push("Note: You may owe a funding fee (1-3.3% of loan amount) unless you have a disability rating or Purple Heart.");
+      }
+
+      results.homeLoan.forms.push({
+        form: "VA Form 26-1880", name: "Request for a Certificate of Eligibility (COE)",
+        reason: "Proves your eligibility to your lender. Can be obtained online via VA.gov or through your lender.",
+        priority: "primary"
+      });
+      results.homeLoan.docs.push("DD-214");
+      results.homeLoan.docs.push("Proof of current income and employment");
+      results.homeLoan.docs.push("Credit report authorization");
+
+      results.recommendations.push("HOME LOAN: Most veterans qualify but don't use this benefit. VA home loans offer significant advantages. Consider getting your Certificate of Eligibility even if you're not buying now.");
+    }
+  }
+
+  // ── VOCATIONAL REHABILITATION (CHAPTER 31) ─────────────────────────────
+  if (isHonorable || isGeneral || isOTH || isBadConduct) {
+    const disabilityRating = questionnaire?.disabilityRating || 0;
+    const qualifiesForVocRehab =
+      (disabilityRating >= 10) ||
+      (disabilityRating > 0 && questionnaire?.cannotWork); // Severe employment handicap
+
+    if (qualifiesForVocRehab) {
+      results.vocRehab.eligible = true;
+      results.vocRehab.details.push("Chapter 31 Vocational Rehabilitation helps service-connected disabled veterans with job training and placement.");
+      results.vocRehab.details.push("Covers: education/training, job placement, supplies/equipment, and subsistence allowance during training.");
+      results.vocRehab.details.push("You have 12 years from separation or notification of disability rating to use these benefits (delimiting period).");
+
+      if (questionnaire?.cannotWork) {
+        results.vocRehab.details.push("Because you indicated you cannot work, this benefit is HIGHLY RECOMMENDED for retraining in a field you can perform.");
+      }
+
+      results.vocRehab.forms.push({
+        form: "VA Form 28-1900", name: "Application for Vocational Rehabilitation",
+        reason: "Primary application for Chapter 31 benefits",
+        priority: "primary"
+      });
+      results.vocRehab.docs.push("DD-214");
+      results.vocRehab.docs.push("Recent disability rating decision from VA");
+      results.vocRehab.docs.push("Medical evidence of service-connected disability");
+
+      if (questionnaire?.cannotWork || disabilityRating >= 20) {
+        results.recommendations.push("VOCATIONAL REHAB: You qualify for Chapter 31. If you're unable to work, this is a critical resource for retraining and job placement.");
+      }
+    }
+  }
+
+  // ── AID & ATTENDANCE ─────────────────────────────────────────────────
+  if (questionnaire?.needsAidAttendance) {
+    results.aidAttendance.eligible = true;
+    results.aidAttendance.details.push("Aid & Attendance (A&A) is Special Monthly Compensation added to your disability rating if you need help with daily living.");
+    results.aidAttendance.details.push("You qualify if you need personal assistance with: bathing, dressing, eating, grooming, using the toilet, or are housebound.");
+    results.aidAttendance.details.push("This is paid as a monthly addition to your disability compensation (not a separate benefit).");
+
+    if (questionnaire.aidAttendanceNeeds && questionnaire.aidAttendanceNeeds.length > 0) {
+      results.aidAttendance.details.push(`You indicated needing help with: ${questionnaire.aidAttendanceNeeds.join(", ")}`);
+    }
+
+    results.aidAttendance.forms.push({
+      form: "VA Form 21-2680", name: "Examination for Housebound Status or Permanent Need for Aid and Attendance",
+      reason: "Required to establish A&A eligibility. Must be completed with your VA provider.",
+      priority: "primary"
+    });
+    results.aidAttendance.docs.push("Medical evidence of need for assistance");
+    results.aidAttendance.docs.push("Care provider statements (if applicable)");
+    results.aidAttendance.docs.push("Documentation of daily living limitations");
+
+    results.recommendations.push("AID & ATTENDANCE: If approved, this significantly increases your monthly VA payment. Ensure your provider documents your specific care needs clearly.");
+  }
+
+  // ── SECONDARY CONDITIONS ─────────────────────────────────────────────
+  let hasSecondaryEligibility = false;
+
+  if (questionnaire?.hasSecondaryConditions && questionnaire.secondaryPairs && questionnaire.secondaryPairs.length > 0) {
+    hasSecondaryEligibility = true;
+    results.secondaryConditions.eligible = true;
+    results.secondaryConditions.details.push("You indicated secondary conditions that may be service-connected due to your primary conditions.");
+    results.secondaryConditions.details.push("Secondary conditions are rated separately and add to your total disability rating.");
+
+    questionnaire.secondaryPairs.forEach(pair => {
+      const pairInfo = SECONDARY_CONDITION_PAIRS.find(
+        p => p.primary.toLowerCase() === pair.primary.toLowerCase()
+      );
+      if (pairInfo) {
+        results.secondaryConditions.details.push(`${pair.primary} → ${pair.secondary}: ${pairInfo.explanation}`);
+      }
+    });
+  } else if (questionnaire?.conditions && questionnaire.conditions.length > 0) {
+    // Auto-detect potential secondary conditions
+    const detectedSecondaries = detectSecondaryConditions(questionnaire.conditions);
+    if (detectedSecondaries.length > 0) {
+      hasSecondaryEligibility = true;
+      results.secondaryConditions.eligible = true;
+      results.secondaryConditions.details.push("We detected potential secondary conditions based on your primary conditions:");
+      detectedSecondaries.forEach(detection => {
+        results.secondaryConditions.details.push(`• ${detection.primary} may lead to: ${detection.secondaries.join(", ")}`);
+      });
+    }
+  }
+
+  if (hasSecondaryEligibility) {
+    results.secondaryConditions.forms.push({
+      form: "VA Form 21-526EZ", name: "Supplemental Disability Claim",
+      reason: "Used to claim secondary conditions on top of your existing service-connected disability",
+      priority: "conditional"
+    });
+    results.secondaryConditions.docs.push("Nexus letter linking secondary condition to primary condition");
+    results.secondaryConditions.docs.push("Medical evidence of both primary and secondary conditions");
+
+    results.recommendations.push("SECONDARY CONDITIONS: Many veterans miss additional compensation by not claiming secondary conditions. Include these in your claim with medical evidence linking them to your primary conditions.");
   }
 
   // ── CROSS-CUTTING RECOMMENDATIONS ────────────────────────────────────
@@ -363,4 +629,34 @@ export function evaluateEligibility(dd214: DD214Data, questionnaire: Partial<Que
   }
 
   return results;
+}
+
+// ─── HELPER FUNCTIONS ───────────────────────────────────────────────────
+
+function isWartimeEra(serviceStart: Date, serviceEnd: Date): boolean {
+  const wartimePeriods = [
+    { start: new Date("1941-12-07"), end: new Date("1946-12-31") }, // WWII
+    { start: new Date("1950-06-27"), end: new Date("1955-01-31") }, // Korea
+    { start: new Date("1964-08-05"), end: new Date("1975-05-07") }, // Vietnam
+    { start: new Date("1990-08-02"), end: new Date("1991-04-11") }, // Gulf War
+    { start: new Date("2001-09-11"), end: new Date("2024-12-31") }  // War on Terror (ongoing)
+  ];
+
+  return wartimePeriods.some(period =>
+    serviceStart <= period.end && serviceEnd >= period.start
+  );
+}
+
+export function detectSecondaryConditions(conditions: string[]): Array<{ primary: string; secondaries: string[] }> {
+  const detected: Array<{ primary: string; secondaries: string[] }> = [];
+  const lowerConditions = conditions.map(c => c.toLowerCase());
+
+  SECONDARY_CONDITION_PAIRS.forEach(pair => {
+    const pairPrimaryLower = pair.primary.toLowerCase();
+    if (lowerConditions.some(c => c.includes(pairPrimaryLower.split(/\s+/)[0]))) {
+      detected.push({ primary: pair.primary, secondaries: pair.secondaries });
+    }
+  });
+
+  return detected;
 }

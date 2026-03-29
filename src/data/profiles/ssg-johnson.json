@@ -1,0 +1,66 @@
+{
+  "id": "ssg-johnson",
+  "label": "SSG Marcus Johnson — Marine Corps, Camp Lejeune, Other Than Honorable Discharge, Rifleman",
+  "dd214": {
+    "name": "Johnson, Marcus T.",
+    "branch": "Marine Corps",
+    "mos": "0311 — Rifleman",
+    "rank": "E-6 / SSG",
+    "enteredActiveDuty": "1975-06-10",
+    "separationDate": "1986-05-30",
+    "characterOfDischarge": "Other Than Honorable",
+    "decorations": "Sea Service Deployment Ribbon, Good Conduct Medal (2), National Defense Service Medal",
+    "dutyLocations": "Marine Barracks Camp Lejeune NC, Marine Air Ground Task Force School Camp Lejeune NC, USS Saipan LHA-2",
+    "remarks": "Eleven years active duty service with primary assignment at Camp Lejeune (1975-1986). Resided on base with family quarters. Separated under Other Than Honorable characterization due to administrative action. Medical records document multiple health issues potentially related to Camp Lejeune water contamination.",
+    "narrativeReason": "Separation by Administrative Action",
+    "totalServiceMonths": 132
+  },
+  "medicalRecords": {
+    "vaRecords": [
+      {
+        "date": "2018-03-12",
+        "provider": "VA Eastern North Carolina Health Care System",
+        "type": "Camp Lejeune Health Assessment",
+        "diagnosis": ["Aplastic anemia (D61.9)", "History of bladder cancer (C67 — 2001 status post radical cystectomy)"],
+        "notes": "Veteran served at Camp Lejeune 1975-1986, full 11 years including family quarters residence. VA presumptive conditions evaluation completed. History of bladder cancer (removed 2001) and current aplastic anemia consistent with contaminated water exposure (TCE, benzene)."
+      },
+      {
+        "date": "2019-07-20",
+        "provider": "VA Eastern North Carolina — Hematology",
+        "type": "Hematology Consultation",
+        "diagnosis": ["Aplastic anemia (D61.9)", "Chronic neutropenia (D70.9)"],
+        "notes": "CBC shows pancytopenia with borderline low hemoglobin (10.2 g/dL), WBC 3.2K, platelets 95K. Bone marrow biopsy shows hypocellularity. Treatment initiated with immunosuppressive therapy."
+      }
+    ],
+    "privateRecords": [],
+    "summary": {
+      "conditions": [
+        "Aplastic anemia",
+        "Chronic neutropenia",
+        "History of bladder cancer (post-radical cystectomy, 2001)"
+      ],
+      "presumptiveExposures": ["Camp Lejeune water contamination (TCE, benzene, vinyl chloride) — 1975-1986"],
+      "currentMedications": ["ATG (anti-thymocyte globulin) therapy", "Cyclosporine", "G-CSF as needed"],
+      "functionalImpact": "Aplastic anemia causes fatigue limiting work capacity. Frequent medical appointments required. Post-cystectomy continent urinary diversion requires ongoing management."
+    }
+  },
+  "questionnaire": {
+    "conditions": [
+      "Aplastic anemia",
+      "History of bladder cancer"
+    ],
+    "hasPTSD": false,
+    "hasTBI": false,
+    "hasTinnitus": false,
+    "hasHearingLoss": false,
+    "hasPrivateMedical": false,
+    "hasVARecords": true,
+    "hasBuddyStatements": false,
+    "cannotWork": true,
+    "disabilityRating": 0,
+    "hasFiledIntentToFile": false,
+    "campLejeuneResident": true,
+    "campLejeuneYearsStart": 1975,
+    "campLejeuneYearsEnd": 1986
+  }
+}

@@ -1,0 +1,60 @@
+{
+  "id": "spc-chen",
+  "label": "SPC Wei Chen — Air Force, Disability Discharge, Short Service, IT Specialist",
+  "dd214": {
+    "name": "Chen, Wei M.",
+    "branch": "Air Force",
+    "mos": "25B — Information Technology Specialist",
+    "rank": "E-4 / SPC",
+    "enteredActiveDuty": "2022-03-01",
+    "separationDate": "2022-07-15",
+    "characterOfDischarge": "Honorable",
+    "decorations": "National Defense Service Medal",
+    "dutyLocations": "Joint Base San Antonio-Lackland TX, Langley Air Force Base VA",
+    "remarks": "Separated by Administrative Action due to service-related disability sustained during initial skills training. Medical evaluation board recommended disability separation with 30% combined rating. Characterized as Honorable discharge due to disability.",
+    "narrativeReason": "Disability",
+    "totalServiceMonths": 4.5
+  },
+  "medicalRecords": {
+    "vaRecords": [
+      {
+        "date": "2022-05-14",
+        "provider": "Langley Air Force Base Medical Group",
+        "type": "Initial Medical Evaluation",
+        "diagnosis": ["Acute anxiety disorder (F41.1)", "Sleep disorder (G47.00)"],
+        "notes": "Trainee reported severe anxiety symptoms during technical training phase. Sleep disturbance and inability to concentrate affecting training performance. Medical evaluation initiated."
+      },
+      {
+        "date": "2022-06-20",
+        "provider": "VA Hampton Roads Health Care System",
+        "type": "MEB Evaluation",
+        "diagnosis": ["Anxiety disorder, service-connected (F41.1)"],
+        "notes": "Medical Evaluation Board determined service member unable to continue active duty due to service-related condition. Rated at 30% for anxiety disorder. Recommended discharge with separation pay."
+      }
+    ],
+    "privateRecords": [],
+    "summary": {
+      "conditions": [
+        "Service-related anxiety disorder"
+      ],
+      "presumptiveExposures": [],
+      "currentMedications": ["Sertraline 50mg daily"],
+      "functionalImpact": "Anxiety limits ability to work in high-pressure environments. Sleep disturbance affects daytime functioning."
+    }
+  },
+  "questionnaire": {
+    "conditions": [
+      "Anxiety disorder"
+    ],
+    "hasPTSD": false,
+    "hasTBI": false,
+    "hasTinnitus": false,
+    "hasHearingLoss": false,
+    "hasPrivateMedical": false,
+    "hasVARecords": true,
+    "hasBuddyStatements": false,
+    "cannotWork": false,
+    "disabilityRating": 30,
+    "hasFiledIntentToFile": false
+  }
+}

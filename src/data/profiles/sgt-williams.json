@@ -1,0 +1,74 @@
+{
+  "id": "sgt-williams",
+  "label": "SGT James Williams — Army, Afghanistan (OEF), Bad Conduct Discharge, PTSD, Tinnitus, Back Pain",
+  "dd214": {
+    "name": "Williams, James D.",
+    "branch": "Army",
+    "mos": "11B — Infantryman",
+    "rank": "E-5 / SGT",
+    "enteredActiveDuty": "2010-03-22",
+    "separationDate": "2014-08-15",
+    "characterOfDischarge": "Bad Conduct",
+    "decorations": "Afghanistan Campaign Medal, Combat Infantryman Badge, National Defense Service Medal",
+    "dutyLocations": "Fort Benning GA, Forward Operating Base Salerno Afghanistan, Combat Outpost Saro Afghanistan, Fort Carson CO",
+    "remarks": "Served two deployments to Afghanistan (OEF 2011, OEF 2012-2013). Infantry squad leader during active combat operations Kunar and Paktika provinces. Separated under characterization of Bad Conduct Discharge per administrative review board decision in 2014.",
+    "narrativeReason": "Separation by Administrative Action",
+    "totalServiceMonths": 53
+  },
+  "medicalRecords": {
+    "vaRecords": [
+      {
+        "date": "2015-01-10",
+        "provider": "VA Eastern Colorado Health Care System",
+        "type": "Initial VA Intake",
+        "diagnosis": ["PTSD, combat-related (F43.12)", "Tinnitus, bilateral (H93.19)", "Chronic low back pain (M54.5)"],
+        "notes": "Veteran reports nightmares, hypervigilance, and avoidance behaviors related to Afghanistan service. Tinnitus began after exposure to IEDs and sustained weapons fire. Lower back pain attributed to heavy load carries during deployments. PCL-5 score: 52."
+      },
+      {
+        "date": "2015-03-18",
+        "provider": "VA Eastern Colorado — Audiology",
+        "type": "Audiology Evaluation",
+        "diagnosis": ["Tinnitus, bilateral (H93.19)", "Sensorineural hearing loss, bilateral (H90.3)"],
+        "notes": "Pure tone audiometry confirms bilateral sensorineural hearing loss with prominent tinnitus in right ear. Pattern consistent with noise-induced hearing loss from combat exposures. Hearing aids recommended."
+      },
+      {
+        "date": "2015-05-22",
+        "provider": "VA Eastern Colorado — Spine Clinic",
+        "type": "Lumbar Spine Imaging",
+        "diagnosis": ["Lumbar strain (M54.5)", "Degenerative disc disease, lumbar spine (M47.16)"],
+        "notes": "MRI shows early degenerative changes at L4-L5 with mild disc protrusion. Consistent with mechanical low back pain from heavy field load and repetitive impact during military operations. Physical therapy initiated."
+      }
+    ],
+    "privateRecords": [],
+    "summary": {
+      "conditions": [
+        "PTSD (combat-related, chronic)",
+        "Bilateral tinnitus",
+        "Bilateral sensorineural hearing loss",
+        "Chronic low back pain",
+        "Lumbar degenerative disc disease"
+      ],
+      "presumptiveExposures": ["Noise exposure (MOS 11B Infantryman)", "Combat exposure (Afghanistan OEF)"],
+      "currentMedications": ["Sertraline 100mg daily", "Ibuprofen as needed for back pain"],
+      "functionalImpact": "PTSD symptoms limit social engagement. Tinnitus disrupts sleep. Back pain limits sitting tolerance to 20-30 minutes."
+    }
+  },
+  "questionnaire": {
+    "conditions": [
+      "PTSD",
+      "Tinnitus",
+      "Hearing loss",
+      "Lower back pain"
+    ],
+    "hasPTSD": true,
+    "hasTBI": false,
+    "hasTinnitus": true,
+    "hasHearingLoss": true,
+    "hasPrivateMedical": false,
+    "hasVARecords": true,
+    "hasBuddyStatements": false,
+    "cannotWork": false,
+    "disabilityRating": 0,
+    "hasFiledIntentToFile": false
+  }
+}

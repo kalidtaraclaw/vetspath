@@ -1,0 +1,78 @@
+{
+  "id": "cpl-nguyen",
+  "label": "CPL Linh Nguyen — Army, Vietnam, Agent Orange, General Discharge, Cannon Crewmember",
+  "dd214": {
+    "name": "Nguyen, Linh T.",
+    "branch": "Army",
+    "mos": "13B — Cannon Crewmember",
+    "rank": "E-4 / CPL",
+    "enteredActiveDuty": "1968-07-12",
+    "separationDate": "1971-05-20",
+    "characterOfDischarge": "General (Under Honorable Conditions)",
+    "decorations": "Vietnam Service Medal, Vietnam Campaign Medal with 60 Device, National Defense Service Medal",
+    "dutyLocations": "Fort Sill OK, Long Binh Vietnam, Camp Enari Vietnam, Phuoc Vinh Vietnam",
+    "remarks": "Three years active duty with 24 months deployed to Vietnam 1969-1971. Artillery forward observer and cannon crewmember. Separated under General discharge status in 1971. Documented exposure to Agent Orange during defoliation operations in Phuoc Vinh and Long Binh areas.",
+    "narrativeReason": "Completion of Required Service",
+    "totalServiceMonths": 36
+  },
+  "medicalRecords": {
+    "vaRecords": [
+      {
+        "date": "2008-11-18",
+        "provider": "VA Los Angeles Health Care System",
+        "type": "Initial VA Intake",
+        "diagnosis": ["Type 2 Diabetes Mellitus (E11.9)", "Hypertension (I10)"],
+        "notes": "Veteran age 62 with established Type 2 diabetes (diagnosed 2002) and hypertension. Reported Vietnam service 1969-1971 with potential Agent Orange exposure. VA intake includes screening for presumptive conditions."
+      },
+      {
+        "date": "2010-03-24",
+        "provider": "VA Los Angeles — Cardiology",
+        "type": "Cardiac Evaluation",
+        "diagnosis": ["Coronary artery disease (I25.10)", "Hypertension, controlled (I10)"],
+        "notes": "EKG and stress test show evidence of CAD with anterior wall ischemia. Patient underwent cardiac catheterization showing 60% LAD stenosis. Stent placed. Attributed to diabetes and hypertension complications. Agent Orange presumptive condition evaluation ongoing."
+      },
+      {
+        "date": "2015-06-10",
+        "provider": "VA Los Angeles — Diabetes Clinic",
+        "type": "Diabetes Management Update",
+        "diagnosis": ["Type 2 Diabetes Mellitus with complications (E11.9)", "Diabetic nephropathy (E11.22)", "Peripheral neuropathy (E11.42)"],
+        "notes": "Long-standing diabetes now with early kidney involvement (eGFR 55) and distal polyneuropathy. On insulin therapy plus metformin. Poor glycemic control despite medications. Related to presumptive Agent Orange exposure."
+      }
+    ],
+    "privateRecords": [],
+    "summary": {
+      "conditions": [
+        "Type 2 Diabetes Mellitus (presumptive Agent Orange)",
+        "Diabetic nephropathy (presumptive Agent Orange)",
+        "Diabetic peripheral neuropathy",
+        "Coronary artery disease",
+        "Hypertension"
+      ],
+      "presumptiveExposures": ["Agent Orange (Vietnam 1969-1971, Phuoc Vinh and Long Binh areas)"],
+      "currentMedications": ["Insulin glargine 40 units daily", "Metformin 1000mg twice daily", "Lisinopril 20mg daily", "Atorvastatin 40mg daily", "Aspirin 81mg daily"],
+      "functionalImpact": "Diabetes complications limit physical activity. Peripheral neuropathy affects gait and balance. Cardiac condition restricts exertion. Multiple daily medical appointments and medication management required."
+    }
+  },
+  "questionnaire": {
+    "conditions": [
+      "Type 2 Diabetes",
+      "Kidney disease (diabetes-related)",
+      "Nerve damage (diabetes-related)",
+      "Heart disease",
+      "High blood pressure"
+    ],
+    "hasPTSD": false,
+    "hasTBI": false,
+    "hasTinnitus": false,
+    "hasHearingLoss": false,
+    "hasPrivateMedical": false,
+    "hasVARecords": true,
+    "hasBuddyStatements": false,
+    "cannotWork": true,
+    "disabilityRating": 0,
+    "hasFiledIntentToFile": false,
+    "agentOrangeExposure": true,
+    "vietnamServiceStart": 1969,
+    "vietnamServiceEnd": 1971
+  }
+}
