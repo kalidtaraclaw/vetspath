@@ -477,15 +477,13 @@ function FormsAndDocs({ results, onBack }: { results: EligibilityResults; onBack
 
 function VALogo() {
   return (
-    <svg width="44" height="44" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="U.S. Department of Veterans Affairs" role="img">
-      <circle cx="50" cy="50" r="48" fill="#003F72" stroke="#B7A369" strokeWidth="3" />
-      <circle cx="50" cy="50" r="40" fill="none" stroke="#B7A369" strokeWidth="1.5" />
-      <text x="50" y="42" textAnchor="middle" fontFamily="serif" fontSize="30" fontWeight="700" fill="white" letterSpacing="-1">VA</text>
-      <text x="50" y="56" textAnchor="middle" fontFamily="sans-serif" fontSize="6.5" fontWeight="600" fill="#B7A369" letterSpacing="0.5">U.S. DEPARTMENT OF</text>
-      <text x="50" y="65" textAnchor="middle" fontFamily="sans-serif" fontSize="6.5" fontWeight="600" fill="#B7A369" letterSpacing="0.5">VETERANS AFFAIRS</text>
-      <line x1="22" y1="70" x2="78" y2="70" stroke="#B7A369" strokeWidth="0.8" />
-      <path d="M45 75 L50 85 L55 75" fill="none" stroke="#B7A369" strokeWidth="1.5" strokeLinejoin="round" />
-    </svg>
+    <img
+      src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/Seal_of_the_U.S._Department_of_Veterans_Affairs.svg/200px-Seal_of_the_U.S._Department_of_Veterans_Affairs.svg.png"
+      alt="U.S. Department of Veterans Affairs Seal"
+      width={44}
+      height={44}
+      style={{ borderRadius: '50%' }}
+    />
   );
 }
 
