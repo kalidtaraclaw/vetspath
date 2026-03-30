@@ -1,14 +1,12 @@
 "use client";
 
 import { useState, useCallback, useRef } from "react";
-import { processDocument, type OCRResult, type UploadedDocument } from "@/lib/ocr-pipeline";
+import { type OCRResult, type UploadedDocument } from "@/lib/ocr-pipeline";
 import {
   extractDocument,
-  AI_PROVIDERS,
-  type AIProviderConfig,
-  type AIProviderName,
   type EnhancedExtractionResult,
 } from "@/lib/ai-document-reader";
+import AI_CONFIG from "@/lib/ai-config";
 import type { DD214Data } from "@/lib/rules-engine";
 
 // ─── BRAND COLORS (matching page.tsx) ─────────────────────────────────
@@ -24,159 +22,6 @@ const brand = {
   white: "#FFFFFF",
   orange: "#CC5800",
 };
-
-// ─── AI SETTINGS PANEL ────────────────────────────────────────────────
-
-interface AISettingsProps {
-  config: AIProviderConfig | null;
-  onConfigChange: (config: AIProviderConfig | null) => void;
-}
-
-function AISettingsPanel({ config, onConfigChange }: AISettingsProps) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [enabled, setEnabled] = useState(config !== null);
-  const [provider, setProvider] = useState<AIProviderName>(config?.provider || "claude");
-  const [apiKey, setApiKey] = useState(config?.apiKey || "");
-  const [endpoint, setEndpoint] = useState(config?.endpoint || "");
-
-  const handleToggle = useCallback((on: boolean) => {
-    setEnabled(on);
-    if (!on) {
-      onConfigChange(null);
-    } else if (apiKey) {
-      onConfigChange({ provider, apiKey, endpoint: endpoint || undefined });
-    }
-  }, [provider, apiKey, endpoint, onConfigChange]);
-
-  const handleSave = useCallback(() => {
-    if (enabled && apiKey) {
-      onConfigChange({ provider, apiKey, endpoint: endpoint || undefined });
-    }
-  }, [enabled, provider, apiKey, endpoint, onConfigChange]);
-
-  const providerMeta = AI_PROVIDERS[provider];
-
-  return (
-    <div className="mb-4">
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 text-sm font-medium transition-colors"
-        style={{ color: brand.azure }}
-        aria-expanded={isOpen}
-      >
-        <span style={{ transform: isOpen ? "rotate(90deg)" : "none", transition: "transform 0.2s", display: "inline-block" }}>
-          &#9654;
-        </span>
-        AI-Powered Reading {enabled ? "(Active)" : "(Off)"}
-      </button>
-
-      {isOpen && (
-        <div
-          className="mt-3 rounded-lg p-4"
-          style={{ backgroundColor: brand.ice, border: `1px solid ${brand.sky}` }}
-        >
-          <p className="text-xs mb-3" style={{ color: brand.royal }}>
-            When enabled, an AI vision model reads your document as a backup if OCR struggles
-            with handwriting, low quality scans, or complex layouts. Your API key is used
-            directly from your browser and never stored on any server.
-          </p>
-
-          {/* Enable/Disable Toggle */}
-          <div className="flex items-center gap-3 mb-3">
-            <button
-              onClick={() => handleToggle(!enabled)}
-              className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors"
-              style={{ backgroundColor: enabled ? brand.azure : brand.silver }}
-              role="switch"
-              aria-checked={enabled}
-              aria-label="Enable AI-powered document reading"
-            >
-              <span
-                className="inline-block h-4 w-4 rounded-full bg-white transition-transform"
-                style={{ transform: enabled ? "translateX(22px)" : "translateX(4px)" }}
-              />
-            </button>
-            <span className="text-sm" style={{ color: brand.midnight }}>
-              {enabled ? "AI Reading Enabled" : "OCR Only"}
-            </span>
-          </div>
-
-          {enabled && (
-            <div className="space-y-3">
-              {/* Provider Selection */}
-              <div>
-                <label className="block text-xs font-medium mb-1" style={{ color: brand.midnight }}>
-                  AI Provider
-                </label>
-                <select
-                  value={provider}
-                  onChange={(e) => {
-                    setProvider(e.target.value as AIProviderName);
-                    setEndpoint("");
-                  }}
-                  className="w-full rounded-lg p-2 text-sm"
-                  style={{ border: `1px solid ${brand.silver}`, color: brand.midnight }}
-                >
-                  {Object.entries(AI_PROVIDERS).map(([key, meta]) => (
-                    <option key={key} value={key}>{meta.displayName}</option>
-                  ))}
-                </select>
-                <p className="text-xs mt-1" style={{ color: brand.silver }}>
-                  {providerMeta.description}
-                </p>
-              </div>
-
-              {/* API Key */}
-              <div>
-                <label className="block text-xs font-medium mb-1" style={{ color: brand.midnight }}>
-                  API Key
-                </label>
-                <input
-                  type="password"
-                  value={apiKey}
-                  onChange={(e) => setApiKey(e.target.value)}
-                  placeholder={`Enter your ${providerMeta.displayName} API key`}
-                  className="w-full rounded-lg p-2 text-sm"
-                  style={{ border: `1px solid ${brand.silver}`, color: brand.midnight }}
-                />
-                <p className="text-xs mt-1" style={{ color: brand.silver }}>
-                  Your key stays in your browser. It is sent directly to {providerMeta.displayName} only.
-                </p>
-              </div>
-
-              {/* Custom Endpoint (required for Llama, optional for others) */}
-              {(providerMeta.requiresEndpoint || provider === "llama") && (
-                <div>
-                  <label className="block text-xs font-medium mb-1" style={{ color: brand.midnight }}>
-                    API Endpoint {providerMeta.requiresEndpoint ? "(Required)" : "(Optional)"}
-                  </label>
-                  <input
-                    type="url"
-                    value={endpoint}
-                    onChange={(e) => setEndpoint(e.target.value)}
-                    placeholder="e.g., https://api.together.xyz/v1/chat/completions"
-                    className="w-full rounded-lg p-2 text-sm"
-                    style={{ border: `1px solid ${brand.silver}`, color: brand.midnight }}
-                  />
-                </div>
-              )}
-
-              {/* Save Button */}
-              <button
-                onClick={handleSave}
-                disabled={!apiKey || (providerMeta.requiresEndpoint && !endpoint)}
-                className="px-4 py-2 rounded-lg text-sm font-medium text-white transition-colors disabled:opacity-40"
-                style={{ backgroundColor: brand.royal }}
-              >
-                Save Settings
-              </button>
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
 
 // ─── DOCUMENT UPLOAD COMPONENT ─────────────────────────────────────────
 
@@ -194,7 +39,6 @@ export default function DocumentUpload({
   const [progress, setProgress] = useState(0);
   const [progressStage, setProgressStage] = useState<"ocr" | "ai">("ocr");
   const [expandedRaw, setExpandedRaw] = useState<number | null>(null);
-  const [aiConfig, setAIConfig] = useState<AIProviderConfig | null>(null);
   const [enhancedResults, setEnhancedResults] = useState<Map<number, EnhancedExtractionResult>>(new Map());
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -234,53 +78,34 @@ export default function DocumentUpload({
       setDocuments([...allResults]);
 
       try {
-        if (aiConfig) {
-          // ── Enhanced extraction (OCR + AI fallback) ──
-          const enhanced = await extractDocument(
-            allResults[i].file,
-            { aiConfig },
-            (stage, p) => {
-              setProgressStage(stage);
-              setProgress(p);
-            },
-          );
+        // Always use enhanced extraction (OCR + AI fallback via hardcoded config)
+        const enhanced = await extractDocument(
+          allResults[i].file,
+          { aiConfig: AI_CONFIG },
+          (stage, p) => {
+            setProgressStage(stage);
+            setProgress(p);
+          },
+        );
 
-          newEnhanced.set(i, enhanced);
+        newEnhanced.set(i, enhanced);
 
-          // Convert to OCRResult for backward compatibility
-          const ocrResult: OCRResult = {
-            rawText: enhanced.ocrResult.rawText,
-            confidence: enhanced.overallConfidence,
-            extractedFields: enhanced.mergedFields,
-            documentType: enhanced.aiResult?.documentType || enhanced.ocrResult.documentType,
-            warnings: enhanced.warnings,
-          };
+        // Convert to OCRResult for backward compatibility
+        const ocrResult: OCRResult = {
+          rawText: enhanced.ocrResult.rawText,
+          confidence: enhanced.overallConfidence,
+          extractedFields: enhanced.mergedFields,
+          documentType: enhanced.aiResult?.documentType || enhanced.ocrResult.documentType,
+          warnings: enhanced.warnings,
+        };
 
-          allResults[i] = { ...allResults[i], status: "complete", result: ocrResult };
-          setDocuments([...allResults]);
+        allResults[i] = { ...allResults[i], status: "complete", result: ocrResult };
+        setDocuments([...allResults]);
 
-          if (ocrResult.documentType === "dd214") {
-            for (const [key, value] of Object.entries(enhanced.mergedFields)) {
-              if (value && !dd214Fields[key as keyof DD214Data]) {
-                (dd214Fields as Record<string, unknown>)[key] = value;
-              }
-            }
-          }
-        } else {
-          // ── Standard OCR-only extraction ──
-          const result: OCRResult = await processDocument(
-            allResults[i].file,
-            (p) => setProgress(p),
-          );
-
-          allResults[i] = { ...allResults[i], status: "complete", result };
-          setDocuments([...allResults]);
-
-          if (result.documentType === "dd214") {
-            for (const [key, value] of Object.entries(result.extractedFields)) {
-              if (value && !dd214Fields[key as keyof DD214Data]) {
-                (dd214Fields as Record<string, unknown>)[key] = value;
-              }
+        if (ocrResult.documentType === "dd214") {
+          for (const [key, value] of Object.entries(enhanced.mergedFields)) {
+            if (value && !dd214Fields[key as keyof DD214Data]) {
+              (dd214Fields as Record<string, unknown>)[key] = value;
             }
           }
         }
@@ -302,7 +127,7 @@ export default function DocumentUpload({
       onFieldsExtracted(dd214Fields);
     }
     onDocumentsProcessed(allResults);
-  }, [documents, aiConfig, enhancedResults, onFieldsExtracted, onDocumentsProcessed]);
+  }, [documents, enhancedResults, onFieldsExtracted, onDocumentsProcessed]);
 
   const handleDrop = useCallback(
     (e: React.DragEvent) => {
@@ -333,9 +158,6 @@ export default function DocumentUpload({
 
   return (
     <section className="max-w-2xl mx-auto mb-8">
-      {/* AI Settings Panel */}
-      <AISettingsPanel config={aiConfig} onConfigChange={setAIConfig} />
-
       {/* Upload Zone */}
       <div
         onDrop={handleDrop}
@@ -365,10 +187,7 @@ export default function DocumentUpload({
           Drag &amp; drop your DD-214, medical records, nexus letters, or C&amp;P exams here
         </p>
         <p className="text-xs" style={{ color: brand.silver }}>
-          Supports PDF and image files (PNG, JPG). Your documents are processed locally in your browser.
-          {aiConfig && (
-            <span style={{ color: brand.azure }}> AI-powered reading via {AI_PROVIDERS[aiConfig.provider].displayName} is active.</span>
-          )}
+          Supports PDF and image files (PNG, JPG). Your documents are processed locally with AI-powered reading.
         </p>
         <input
           ref={fileInputRef}
@@ -492,9 +311,9 @@ export default function DocumentUpload({
                           : "Extracting fields..."
                       ) : (
                         progress < 30
-                          ? "Sending to AI for enhanced reading..."
-                          : progress < 90
                           ? "AI analyzing document..."
+                          : progress < 90
+                          ? "AI reading document fields..."
                           : "Merging results..."
                       )}
                     </p>
@@ -637,7 +456,7 @@ export default function DocumentUpload({
                 ? progressStage === "ai"
                   ? "AI Analyzing..."
                   : "Processing..."
-                : `Scan ${pendingCount} Document${pendingCount > 1 ? "s" : ""}${aiConfig ? " with OCR + AI" : " with OCR"}`}
+                : `Scan ${pendingCount} Document${pendingCount > 1 ? "s" : ""}`}
             </button>
           )}
 
