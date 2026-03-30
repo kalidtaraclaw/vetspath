@@ -512,7 +512,19 @@ export default function Home() {
     setStep(2);
   }, [dd214, questionnaire]);
 
+  const resetAll = useCallback(() => {
+    setDD214({});
+    setQuestionnaire({ conditions: [""] });
+    setResults(null);
+    setActiveProfile(null);
+    setStep(0);
+  }, []);
+
   const loadProfile = useCallback((profileId: string) => {
+    if (profileId === "__reset__") {
+      resetAll();
+      return;
+    }
     const profile = PROFILES.find(p => p.id === profileId);
     if (!profile) return;
     setDD214(profile.dd214 as Partial<DD214Data>);
@@ -520,7 +532,7 @@ export default function Home() {
     setActiveProfile(profileId);
     setStep(0);
     setResults(null);
-  }, []);
+  }, [resetAll]);
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: brand.offwhite, fontFamily: "'Poppins', sans-serif" }}>
@@ -530,10 +542,15 @@ export default function Home() {
           <div className="flex items-center gap-3">
             <VALogo />
             <AquiaLogo />
-            <div>
-              <h1 className="text-xl sm:text-2xl font-bold" style={{ color: brand.midnight }}>VetsPath</h1>
+            <button
+              onClick={resetAll}
+              className="text-left focus:outline-2 focus:outline-offset-2"
+              style={{ outlineColor: brand.azure }}
+              aria-label="Reset to home page"
+            >
+              <h1 className="text-xl sm:text-2xl font-bold hover:opacity-80 transition-opacity" style={{ color: brand.midnight, cursor: 'pointer' }}>VetsPath</h1>
               <p className="text-xs sm:text-sm" style={{ color: brand.azure }}>Your VA Benefits Navigator</p>
-            </div>
+            </button>
             {PROFILES.length > 0 && (
               <select
                 className="ml-auto text-xs rounded px-2 py-1.5 font-medium focus:outline-2 focus:outline-offset-0"
@@ -543,6 +560,7 @@ export default function Home() {
                 aria-label="Load test profile"
               >
                 <option value="">Load test profile...</option>
+                {activeProfile && <option value="__reset__">&#8635; Reset / Clear All</option>}
                 {PROFILES.map(p => (
                   <option key={p.id} value={p.id}>{p.label}</option>
                 ))}
