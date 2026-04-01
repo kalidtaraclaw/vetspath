@@ -1,505 +1,591 @@
 /**
  * VA Form PDF Filler
- * Generates professional PDF forms and pre-fills them with veteran data
- * Uses pdf-lib to create forms from scratch (no binary templates required)
+ * Loads real VA form PDFs from the public/forms/ directory and fills them
+ * with veteran data using pdf-lib, then flattens the forms.
  */
 
-import { PDFDocument, PDFFont, PDFPage, rgb, StandardFonts } from 'pdf-lib';
-import type { VAFormConfig, FormFieldMapping } from './form-field-maps/types';
-import { getFormConfig } from './form-field-maps';
+import { PDFDocument } from 'pdf-lib';
 import type { DD214Data, QuestionnaireData } from './rules-engine';
 
 /**
- * Veteran profile combining all data sources
+ * Result of filling a VA form
  */
-export interface VeteranProfile {
-  dd214: DD214Data;
-  questionnaire: QuestionnaireData;
-}
-
-/**
- * Represents a filled field in the PDF
- */
-export interface FilledField {
-  label: string;
-  value: string;
-  source: 'dd214' | 'questionnaire' | 'auto' | 'empty';
-  required: boolean;
-}
-
-/**
- * Result of filling a form
- */
-export interface FormFillResult {
+export interface FillVAFormResult {
   pdfBytes: Uint8Array;
-  formNumber: string;
-  formName: string;
-  filledFields: FilledField[];
-  totalFields: number;
   filledCount: number;
-  emptyCount: number;
-  fillPercentage: number;
+  totalFields: number;
 }
 
 /**
- * Resolve a field value from the veteran profile using dot notation
- * @param sourceField - e.g., "dd214.name", "questionnaire.claimedConditions"
- * @param profile - The veteran profile
- * @returns Object with value and source
+ * Mapping of form numbers to PDF file paths (served from public/forms/)
  */
-function resolveFieldValue(
-  sourceField: string,
-  profile: VeteranProfile
-): { value: string; source: FilledField['source'] } {
-  const parts = sourceField.split('.');
-  const section = parts[0];
-  const field = parts.slice(1).join('.');
-
-  let value = '';
-  let source: FilledField['source'] = 'empty';
-
-  if (section === 'dd214') {
-    const val = (profile.dd214 as any)[field];
-    if (val) {
-      value = String(val);
-      source = 'dd214';
-    }
-  } else if (section === 'questionnaire') {
-    const val = (profile.questionnaire as any)[field];
-    if (val !== undefined && val !== null) {
-      if (Array.isArray(val)) {
-        value = val.join(', ');
-      } else {
-        value = String(val);
-      }
-      source = 'questionnaire';
-    }
-  } else if (section === 'auto') {
-    // Auto fields are not pre-filled from data, they're for user signature/dates
-    value = '';
-    source = 'auto';
-  }
-
-  return { value, source };
-}
+export const PDF_FILES: Record<string, string> = {
+  '21-0966': '/forms/VA-Form-21-0966.pdf',
+  '21-526EZ': '/forms/VA-Form-21-526EZ.pdf',
+  '10-10EZ': '/forms/VA-Form-10-10EZ.pdf',
+  '22-1990': '/forms/VA-Form-22-1990.pdf',
+  '26-1880': '/forms/VA-Form-26-1880.pdf',
+};
 
 /**
- * Format a value according to its specified format
- * @param value - The raw value
- * @param format - The format type
- * @returns Formatted value
+ * Parse a date in various formats and return { month, day, year } as strings
  */
-function formatValue(value: string, format?: FormFieldMapping['format']): string {
-  if (!value || !format) return value;
+function parseDate(dateStr: string | undefined): { month: string; day: string; year: string } {
+  if (!dateStr) return { month: '', day: '', year: '' };
 
-  switch (format) {
-    case 'uppercase':
-      return value.toUpperCase();
-    case 'date-mmddyyyy': {
-      try {
-        const d = new Date(value);
-        if (isNaN(d.getTime())) return value;
-        return `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}/${d.getFullYear()}`;
-      } catch {
-        return value;
-      }
+  try {
+    let date: Date;
+
+    // Try ISO format (YYYY-MM-DD)
+    if (dateStr.match(/^\d{4}-\d{2}-\d{2}/)) {
+      date = new Date(dateStr + 'T00:00:00Z');
     }
-    case 'date-mmyyyy': {
-      try {
-        const d = new Date(value);
-        if (isNaN(d.getTime())) return value;
-        return `${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
-      } catch {
-        return value;
-      }
+    // Try MM/DD/YYYY
+    else if (dateStr.match(/^\d{1,2}\/\d{1,2}\/\d{4}/)) {
+      const [m, d, y] = dateStr.split('/');
+      date = new Date(`${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}T00:00:00Z`);
     }
-    case 'phone': {
-      const digits = value.replace(/\D/g, '');
-      if (digits.length === 10) {
-        return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
-      }
-      return value;
+    // Try text format (November 3, 1982)
+    else {
+      date = new Date(dateStr);
     }
-    case 'ssn': {
-      const digits = value.replace(/\D/g, '');
-      if (digits.length === 9) {
-        return `${digits.slice(0, 3)}-${digits.slice(3, 5)}-${digits.slice(5)}`;
-      }
-      return value;
+
+    if (isNaN(date.getTime())) {
+      return { month: '', day: '', year: '' };
     }
-    case 'checkbox':
-      return value ? 'Yes' : 'No';
-    default:
-      return value;
+
+    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(date.getUTCDate()).padStart(2, '0');
+    const year = String(date.getUTCFullYear());
+
+    return { month, day, year };
+  } catch {
+    return { month: '', day: '', year: '' };
   }
 }
 
 /**
- * Generate a professional-looking PDF form and fill it with veteran data
+ * Parse a phone number and return { areaCode, middle, last }
  */
-async function generateFormPDF(
-  config: VAFormConfig,
-  filledFields: FilledField[]
-): Promise<Uint8Array> {
-  const doc = await PDFDocument.create();
-  const helvetica = await doc.embedFont(StandardFonts.Helvetica);
-  const helveticaBold = await doc.embedFont(StandardFonts.HelveticaBold);
+function parsePhone(phoneStr: string | undefined): { areaCode: string; middle: string; last: string } {
+  if (!phoneStr) return { areaCode: '', middle: '', last: '' };
 
-  // Aquia brand colors
-  const navy = rgb(3 / 255, 9 / 255, 64 / 255); // #030940
-  const darkNavy = rgb(5 / 255, 15 / 255, 105 / 255); // #050F69
-  const azure = rgb(32 / 255, 113 / 255, 198 / 255); // #2071C6
-  const black = rgb(0, 0, 0);
-  const gray = rgb(0.4, 0.4, 0.4);
-  const darkGray = rgb(0.2, 0.2, 0.2);
-  const lightGray = rgb(0.92, 0.92, 0.92);
-  const white = rgb(1, 1, 1);
-  const fillBlue = rgb(0.85, 0.92, 1); // light blue for filled fields
-
-  const pageWidth = 612; // letter
-  const pageHeight = 792;
-  const margin = 50;
-  const fieldHeight = 18;
-  const labelSize = 8;
-  const valueSize = 10;
-  const lineSpacing = 38;
-
-  let currentPage = doc.addPage([pageWidth, pageHeight]);
-  let yPos = pageHeight - margin;
-  let pageNum = 1;
-
-  const fieldsPerPage = Math.floor((pageHeight - 160) / lineSpacing);
-  const totalPages = Math.ceil(filledFields.length / fieldsPerPage);
-
-  /**
-   * Draw page header
-   */
-  function drawHeader(page: PDFPage): number {
-    // Top bar
-    page.drawRectangle({
-      x: 0,
-      y: pageHeight - 40,
-      width: pageWidth,
-      height: 40,
-      color: darkNavy,
-    });
-
-    page.drawText('DEPARTMENT OF VETERANS AFFAIRS', {
-      x: margin,
-      y: pageHeight - 28,
-      size: 12,
-      font: helveticaBold,
-      color: white,
-    });
-
-    page.drawText(`VA Form ${config.formNumber}`, {
-      x: pageWidth - margin - 120,
-      y: pageHeight - 28,
-      size: 12,
-      font: helveticaBold,
-      color: white,
-    });
-
-    // Form title
-    page.drawText(config.formName.toUpperCase(), {
-      x: margin,
-      y: pageHeight - 60,
-      size: 14,
-      font: helveticaBold,
-      color: navy,
-    });
-
-    // Subtitle
-    page.drawText('PRE-FILLED BY VETSPATH — REVIEW ALL FIELDS BEFORE SUBMITTING', {
-      x: margin,
-      y: pageHeight - 76,
-      size: 8,
-      font: helvetica,
-      color: azure,
-    });
-
-    // Divider
-    page.drawLine({
-      start: { x: margin, y: pageHeight - 82 },
-      end: { x: pageWidth - margin, y: pageHeight - 82 },
-      thickness: 2,
-      color: navy,
-    });
-
-    return pageHeight - 100;
+  const digits = phoneStr.replace(/\D/g, '');
+  if (digits.length < 10) {
+    return { areaCode: '', middle: '', last: '' };
   }
-
-  /**
-   * Draw page footer
-   */
-  function drawFooter(page: PDFPage, pageNum: number, totalPages: number) {
-    page.drawLine({
-      start: { x: margin, y: 40 },
-      end: { x: pageWidth - margin, y: 40 },
-      thickness: 0.5,
-      color: gray,
-    });
-
-    page.drawText(`VA Form ${config.formNumber} — Pre-filled by VetsPath`, {
-      x: margin,
-      y: 28,
-      size: 7,
-      font: helvetica,
-      color: gray,
-    });
-
-    page.drawText(`Page ${pageNum} of ${totalPages}`, {
-      x: pageWidth - margin - 60,
-      y: 28,
-      size: 7,
-      font: helvetica,
-      color: gray,
-    });
-
-    page.drawText('This is a pre-filled draft. Submit the official VA form available at va.gov/find-forms/', {
-      x: margin,
-      y: 18,
-      size: 6,
-      font: helvetica,
-      color: gray,
-    });
-  }
-
-  yPos = drawHeader(currentPage);
-
-  // Track current section for grouping
-  let currentSection = 'VETERAN INFORMATION';
-
-  /**
-   * Detect section from field label
-   */
-  function detectSection(label: string): string {
-    const lbl = label.toLowerCase();
-    if (lbl.includes('branch') || lbl.includes('service entry') || lbl.includes('separation') || lbl.includes('rank') || lbl.includes('mos') || lbl.includes('discharge')) {
-      return 'SERVICE INFORMATION';
-    } else if (lbl.includes('claimed') || lbl.includes('condition')) {
-      return 'CLAIMED CONDITIONS';
-    } else if (lbl.includes('address') || lbl.includes('city') || lbl.includes('state') || lbl.includes('zip')) {
-      return 'CONTACT INFORMATION';
-    } else if (lbl.includes('phone') || lbl.includes('email')) {
-      return 'CONTACT INFORMATION';
-    } else if (lbl.includes('hospitalized') || lbl.includes('previous') || lbl.includes('medical')) {
-      return 'CURRENT STATUS & MEDICAL';
-    } else if (lbl.includes('signature') || lbl.includes('date signed')) {
-      return 'SIGNATURE';
-    }
-    return currentSection;
-  }
-
-  /**
-   * Draw section header
-   */
-  function drawSectionHeader(page: PDFPage, section: string, y: number): number {
-    if (section === currentSection) return y;
-
-    currentSection = section;
-    const headerY = y - 8;
-
-    page.drawText(section, {
-      x: margin,
-      y: headerY,
-      size: 10,
-      font: helveticaBold,
-      color: navy,
-    });
-
-    page.drawLine({
-      start: { x: margin, y: headerY - 4 },
-      end: { x: pageWidth - margin, y: headerY - 4 },
-      thickness: 1,
-      color: azure,
-    });
-
-    return headerY - 16;
-  }
-
-  // Process each field
-  for (let i = 0; i < filledFields.length; i++) {
-    const field = filledFields[i];
-
-    // Check if we need a new page
-    if (yPos < 70) {
-      drawFooter(currentPage, pageNum, totalPages);
-      currentPage = doc.addPage([pageWidth, pageHeight]);
-      pageNum++;
-      currentSection = 'VETERAN INFORMATION'; // Reset section on new page
-      yPos = drawHeader(currentPage);
-    }
-
-    // Handle section headers
-    const newSection = detectSection(field.label);
-    if (newSection !== currentSection) {
-      yPos = drawSectionHeader(currentPage, newSection, yPos);
-
-      if (yPos < 70) {
-        drawFooter(currentPage, pageNum, totalPages);
-        currentPage = doc.addPage([pageWidth, pageHeight]);
-        pageNum++;
-        yPos = drawHeader(currentPage);
-      }
-    }
-
-    const fieldWidth = pageWidth - 2 * margin;
-    const bgColor = field.source !== 'empty' ? fillBlue : lightGray;
-
-    // Field background
-    currentPage.drawRectangle({
-      x: margin,
-      y: yPos - fieldHeight + 4,
-      width: fieldWidth,
-      height: fieldHeight,
-      color: bgColor,
-      borderColor: rgb(0.7, 0.7, 0.7),
-      borderWidth: 0.5,
-    });
-
-    // Label
-    const requiredMarker = field.required ? ' *' : '';
-    currentPage.drawText(field.label + requiredMarker, {
-      x: margin + 4,
-      y: yPos + 5,
-      size: labelSize,
-      font: helvetica,
-      color: gray,
-    });
-
-    // Value
-    if (field.value) {
-      currentPage.drawText(field.value, {
-        x: margin + 4,
-        y: yPos - fieldHeight + 10,
-        size: valueSize,
-        font: helveticaBold,
-        color: black,
-      });
-    } else {
-      currentPage.drawText('[TO BE COMPLETED]', {
-        x: margin + 4,
-        y: yPos - fieldHeight + 10,
-        size: valueSize,
-        font: helvetica,
-        color: rgb(0.7, 0.3, 0.3),
-      });
-    }
-
-    // Source badge
-    if (field.source !== 'empty' && field.source !== 'auto') {
-      const badgeText =
-        field.source === 'dd214'
-          ? 'DD-214'
-          : field.source === 'questionnaire'
-            ? 'Questionnaire'
-            : 'Auto';
-
-      const badgeWidth = helvetica.widthOfTextAtSize(badgeText, 6) + 8;
-      currentPage.drawRectangle({
-        x: pageWidth - margin - badgeWidth - 4,
-        y: yPos + 2,
-        width: badgeWidth,
-        height: 12,
-        color: azure,
-        borderColor: azure,
-        borderWidth: 0,
-      });
-
-      currentPage.drawText(badgeText, {
-        x: pageWidth - margin - badgeWidth,
-        y: yPos + 5,
-        size: 6,
-        font: helveticaBold,
-        color: white,
-      });
-    }
-
-    yPos -= lineSpacing;
-  }
-
-  // Draw final footer
-  drawFooter(currentPage, pageNum, totalPages);
-
-  return doc.save();
-}
-
-/**
- * Fill a VA form with veteran data and generate a PDF
- * @param formNumber - e.g., "21-0966"
- * @param profile - The veteran profile with all data
- * @returns FormFillResult with PDF bytes and statistics
- */
-export async function fillForm(formNumber: string, profile: VeteranProfile): Promise<FormFillResult> {
-  const config = getFormConfig(formNumber);
-  if (!config) {
-    throw new Error(`Unknown form: ${formNumber}`);
-  }
-
-  const filledFields: FilledField[] = [];
-
-  // Process each field mapping
-  for (const mapping of config.fieldMappings) {
-    const { value, source } = resolveFieldValue(mapping.sourceField, profile);
-    const formatted = formatValue(value, mapping.format);
-
-    filledFields.push({
-      label: mapping.label,
-      value: formatted,
-      source: value ? source : 'empty',
-      required: mapping.required,
-    });
-  }
-
-  // Calculate statistics
-  const filledCount = filledFields.filter((f) => f.source !== 'empty').length;
-  const emptyCount = filledFields.filter((f) => f.source === 'empty').length;
-  const fillPercentage = Math.round((filledCount / filledFields.length) * 100);
-
-  // Generate PDF
-  const pdfBytes = await generateFormPDF(config, filledFields);
 
   return {
-    pdfBytes,
-    formNumber: config.formNumber,
-    formName: config.formName,
-    filledFields,
-    totalFields: filledFields.length,
-    filledCount,
-    emptyCount,
-    fillPercentage,
+    areaCode: digits.slice(0, 3),
+    middle: digits.slice(3, 6),
+    last: digits.slice(6, 10),
   };
 }
 
 /**
- * Fill multiple forms at once
- * @param formNumbers - Array of form numbers
- * @param profile - The veteran profile
- * @returns Array of FormFillResult
+ * Parse SSN and return { first, middle, last }
  */
-export async function fillMultipleForms(
-  formNumbers: string[],
-  profile: VeteranProfile
-): Promise<FormFillResult[]> {
-  return Promise.all(formNumbers.map((formNumber) => fillForm(formNumber, profile)));
+function parseSSN(ssnStr: string | undefined): { first: string; middle: string; last: string } {
+  if (!ssnStr) return { first: '', middle: '', last: '' };
+
+  const digits = ssnStr.replace(/\D/g, '');
+  if (digits.length !== 9) {
+    return { first: '', middle: '', last: '' };
+  }
+
+  return {
+    first: digits.slice(0, 3),
+    middle: digits.slice(3, 5),
+    last: digits.slice(5, 9),
+  };
 }
 
 /**
- * Generate a summary of form fill results for display
+ * Parse a name and return { first, middle, last, middleInitial }
  */
-export function generateFillSummary(result: FormFillResult): string {
-  return `
-Form ${result.formNumber}: ${result.formName}
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Total Fields: ${result.totalFields}
-Filled: ${result.filledCount} (${result.fillPercentage}%)
-Empty: ${result.emptyCount}
+function parseName(fullName: string | undefined): {
+  first: string;
+  middle: string;
+  last: string;
+  middleInitial: string;
+} {
+  if (!fullName) return { first: '', middle: '', last: '', middleInitial: '' };
 
-Pre-filled fields are marked with their source:
-• DD-214 fields from your discharge papers
-• Questionnaire fields from your responses
+  const parts = fullName.trim().split(/\s+/);
+  if (parts.length === 0) return { first: '', middle: '', last: '', middleInitial: '' };
 
-Review all fields carefully before submitting the official form.
-  `.trim();
+  const first = parts[0];
+  const last = parts.length > 1 ? parts[parts.length - 1] : '';
+  const middleParts = parts.slice(1, parts.length - 1);
+  const middle = middleParts.join(' ');
+  const middleInitial = middle ? middle.split(' ')[0].charAt(0).toUpperCase() : '';
+
+  return { first, middle, last, middleInitial };
+}
+
+/**
+ * Format full address as "street, city, state ZIP"
+ */
+function formatFullAddress(
+  address: string | undefined,
+  city: string | undefined,
+  state: string | undefined,
+  zip: string | undefined
+): string {
+  const parts = [address, city, `${state} ${zip}`].filter((p) => p && p.trim());
+  return parts.join(', ');
+}
+
+/**
+ * Find a field by partial name match (VA PDFs use deep paths like F[0].Page_1[0].FieldName[0])
+ * First tries exact match, then searches for a field whose name ends with the given name.
+ */
+function findField(form: ReturnType<PDFDocument['getForm']>, fieldName: string) {
+  try {
+    return form.getField(fieldName);
+  } catch {
+    // Try partial match — find first field whose name ends with the short name
+    const fields = form.getFields();
+    for (const f of fields) {
+      if (f.getName().endsWith(fieldName) || f.getName().endsWith('.' + fieldName)) {
+        return f;
+      }
+    }
+    return null;
+  }
+}
+
+/**
+ * Set a text field in the PDF form
+ * Returns true if field was set, false if field not found or read-only
+ */
+function setTextField(form: ReturnType<PDFDocument['getForm']>, fieldName: string, value: string): boolean {
+  if (!value) return false;
+  try {
+    const field = findField(form, fieldName);
+    if (field && 'setText' in field) {
+      (field as { setText: (v: string) => void }).setText(value);
+      return true;
+    }
+  } catch {
+    // Field not found or read-only, continue silently
+  }
+  return false;
+}
+
+/**
+ * Set a checkbox field in the PDF form
+ * Returns true if field was set, false if field not found or read-only
+ */
+function setCheckboxField(form: ReturnType<PDFDocument['getForm']>, fieldName: string, checked: boolean): boolean {
+  try {
+    const field = findField(form, fieldName);
+    if (field && 'check' in field) {
+      const cb = field as unknown as { check: () => void; uncheck: () => void };
+      if (checked) {
+        cb.check();
+      } else {
+        cb.uncheck();
+      }
+      return true;
+    }
+  } catch {
+    // Field not found or read-only, continue silently
+  }
+  return false;
+}
+
+/**
+ * Fill VA Form 21-0966 (Intent to File)
+ */
+async function fillForm21_0966(
+  pdf: PDFDocument,
+  dd214: DD214Data,
+  questionnaire: QuestionnaireData
+): Promise<number> {
+  const form = pdf.getForm();
+  let filledCount = 0;
+
+  const nameInfo = parseName(dd214.name);
+  const ssnInfo = parseSSN(dd214.ssn);
+  const phoneInfo = parsePhone(dd214.phone);
+  const dobInfo = parseDate(dd214.dob);
+
+  const fieldMap: Record<string, string> = {
+    'Veterans_First_Name[0]': nameInfo.first,
+    'Veterans_Last_Name[0]': nameInfo.last,
+    'Veterans_Middle_Initial1[0]': nameInfo.middleInitial,
+    'Veterans_Social_SecurityNumber_FirstThreeNumbers[0]': ssnInfo.first,
+    'Veterans_Social_SecurityNumber_SecondTwoNumbers[0]': ssnInfo.middle,
+    'VeteransSocialSecurityNumber_LastFourNumbers[0]': ssnInfo.last,
+    'DOB_Month[0]': dobInfo.month,
+    'DOB_Day[0]': dobInfo.day,
+    'DOB_Year[0]': dobInfo.year,
+    'Mailing_Address_NumberAndStreet[0]': dd214.address || '',
+    'MailingAddress_City[0]': dd214.city || '',
+    'MailingAddress_StateOrProvince[0]': dd214.state || '',
+    'MailingAddress_ZIPOrPostalCode_FirstFiveNumbers[0]': dd214.zip || '',
+    'Telephone_Number_FirstThreeNumbers[0]': phoneInfo.areaCode,
+    'Telephone_Number_SecondThreeNumbers[0]': phoneInfo.middle,
+    'Telephone_Number_LastFourNumbers[0]': phoneInfo.last,
+    'EMAIL_ADDRESS[0]': dd214.email || '',
+  };
+
+  for (const [fieldName, value] of Object.entries(fieldMap)) {
+    if (typeof value === 'string' && setTextField(form, fieldName, value)) {
+      filledCount++;
+    }
+  }
+
+  // Check compensation checkbox
+  if (setCheckboxField(form, 'F[0].#subform[1].COMPENSATION[0]', true)) {
+    filledCount++;
+  }
+
+  return filledCount;
+}
+
+/**
+ * Fill VA Form 21-526EZ (Disability Compensation)
+ */
+async function fillForm21_526EZ(
+  pdf: PDFDocument,
+  dd214: DD214Data,
+  questionnaire: QuestionnaireData
+): Promise<number> {
+  const form = pdf.getForm();
+  let filledCount = 0;
+
+  const nameInfo = parseName(dd214.name);
+  const ssnInfo = parseSSN(dd214.ssn);
+  const phoneInfo = parsePhone(dd214.phone);
+  const dobInfo = parseDate(dd214.dob);
+  const entryInfo = parseDate(dd214.enteredActiveDuty);
+  const sepInfo = parseDate(dd214.separationDate);
+
+  const fieldMap: Record<string, string> = {
+    'Veteran_Service_Member_First_Name[0]': nameInfo.first,
+    'Veteran_Service_Member_Last_Name[0]': nameInfo.last,
+    'Veteran_Service_Member_Middle_Initial[0]': nameInfo.middleInitial,
+    'SocialSecurityNumber_FirstThreeNumbers[0]': ssnInfo.first,
+    'SocialSecurityNumber_SecondTwoNumbers[0]': ssnInfo.middle,
+    'SocialSecurityNumber_LastFourNumbers[0]': ssnInfo.last,
+    'Date_Of_Birth_Month[0]': dobInfo.month,
+    'Date_Of_Birth_Day[0]': dobInfo.day,
+    'Date_Of_Birth_Year[0]': dobInfo.year,
+    'CurrentMailingAddress_NumberAndStreet[0]': dd214.address,
+    'CurrentMailingAddress_City[0]': dd214.city,
+    'CurrentMailingAddress_StateOrProvince[0]': dd214.state,
+    'CurrentMailingAddress_Country[0]': 'US',
+    'CurrentMailingAddress_ZIPOrPostalCode_FirstFiveNumbers[0]': dd214.zip,
+    'Daytime_Phone_Number_Area_Code[0]': phoneInfo.areaCode,
+    'Telephone_Middle_Three_Numbers[0]': phoneInfo.middle,
+    'Telephone_Last_Four_Numbers[0]': phoneInfo.last,
+    'Email_Address_Optional[0]': dd214.email,
+    'Beginning_Date_Month[0]': entryInfo.month,
+    'Beginning_Date_Day[0]': entryInfo.day,
+    'Beginning_Date_Year[0]': entryInfo.year,
+    'Ending_Date_Month[0]': sepInfo.month,
+    'Ending_Date_Day[0]': sepInfo.day,
+    'Ending_Date_Year[0]': sepInfo.year,
+  };
+
+  for (const [fieldName, value] of Object.entries(fieldMap)) {
+    if (value && setTextField(form, fieldName, value)) {
+      filledCount++;
+    }
+  }
+
+  // Service information subform[11]
+  const serviceFieldMap: Record<string, string> = {
+    'EntryDate_Month[0]': entryInfo.month,
+    'MostRecentActiveServiceEntryDate_Day[0]': entryInfo.day,
+    'EntryDate_Year[0]': entryInfo.year,
+    'ExitDate_Month[0]': sepInfo.month,
+    'ExitDate_Day[0]': sepInfo.day,
+    'ExitDate_Year[0]': sepInfo.year,
+  };
+
+  for (const [fieldName, value] of Object.entries(serviceFieldMap)) {
+    if (value && setTextField(form, fieldName, value)) {
+      filledCount++;
+    }
+  }
+
+  // Claimed conditions subform[10]
+  if (questionnaire.conditions && questionnaire.conditions.length > 0) {
+    const condition = questionnaire.conditions[0];
+    if (setTextField(form, 'CURRENTDISABILITY[0]', condition)) {
+      filledCount++;
+    }
+  }
+
+  return filledCount;
+}
+
+/**
+ * Fill VA Form 10-10EZ (Healthcare)
+ */
+async function fillForm10_10EZ(
+  pdf: PDFDocument,
+  dd214: DD214Data,
+  questionnaire: QuestionnaireData
+): Promise<number> {
+  const form = pdf.getForm();
+  let filledCount = 0;
+
+  const nameInfo = parseName(dd214.name);
+  const ssnInfo = parseSSN(dd214.ssn);
+  const phoneInfo = parsePhone(dd214.phone);
+  const dobInfo = parseDate(dd214.dob);
+
+  // Format name as "Last, First Middle"
+  const firstMiddle = [nameInfo.first, nameInfo.middle].filter((p) => p).join(' ');
+  const formattedName = nameInfo.last && firstMiddle ? `${nameInfo.last}, ${firstMiddle}` : dd214.name || '';
+
+  // Format SSN as XXX-XX-XXXX
+  const formattedSSN = ssnInfo.first && ssnInfo.middle && ssnInfo.last
+    ? `${ssnInfo.first}-${ssnInfo.middle}-${ssnInfo.last}`
+    : '';
+
+  // Format date as MM/DD/YYYY
+  const formattedDOB = dobInfo.month && dobInfo.day && dobInfo.year
+    ? `${dobInfo.month}/${dobInfo.day}/${dobInfo.year}`
+    : '';
+
+  // Format phone as full number
+  const formattedPhone = phoneInfo.areaCode && phoneInfo.middle && phoneInfo.last
+    ? `${phoneInfo.areaCode}${phoneInfo.middle}${phoneInfo.last}`
+    : '';
+
+  const fieldMap: Record<string, string> = {
+    'LastFirstMiddle[0]': formattedName,
+    'SSN[0]': formattedSSN,
+    'DOB[0]': formattedDOB,
+    'MailingAddress_Street[0]': dd214.address,
+    'MailingAddress_City[0]': dd214.city,
+    'MailingAddress_State[0]': dd214.state,
+    'MailingAddress_ZipCode[0]': dd214.zip,
+    'HOMEPhone[0]': formattedPhone,
+    'EmailAddress[0]': dd214.email,
+    'LastBranchOfService[0]': dd214.branch,
+    'LASTENTRYDATE[0]': dd214.enteredActiveDuty || '',
+    'LASTDISCHARGEDATE[0]': dd214.separationDate || '',
+    'DischargeType[0]': dd214.characterOfDischarge,
+  };
+
+  for (const [fieldName, value] of Object.entries(fieldMap)) {
+    if (value && setTextField(form, fieldName, value)) {
+      filledCount++;
+    }
+  }
+
+  // Set birth sex radio button if available
+  if (dd214.gender) {
+    try {
+      const genderField = findField(form, 'BirthSex[0]');
+      if (genderField && 'select' in genderField) {
+        (genderField as unknown as { select: (v: string) => void }).select(dd214.gender.charAt(0).toUpperCase());
+        filledCount++;
+      }
+    } catch {
+      // Field not found, continue
+    }
+  }
+
+  return filledCount;
+}
+
+/**
+ * Fill VA Form 22-1990 (Education/GI Bill)
+ */
+async function fillForm22_1990(
+  pdf: PDFDocument,
+  dd214: DD214Data,
+  questionnaire: QuestionnaireData
+): Promise<number> {
+  const form = pdf.getForm();
+  let filledCount = 0;
+
+  const nameInfo = parseName(dd214.name);
+  const ssnInfo = parseSSN(dd214.ssn);
+  const phoneInfo = parsePhone(dd214.phone);
+  const dobInfo = parseDate(dd214.dob);
+  const entryInfo = parseDate(dd214.enteredActiveDuty);
+  const sepInfo = parseDate(dd214.separationDate);
+
+  const fieldMap: Record<string, string> = {
+    'namefirst[0]': nameInfo.first,
+    'namemiddle[0]': nameInfo.middle,
+    'namelast[0]': nameInfo.last,
+    'ssna1[0]': ssnInfo.first,
+    'ssna2[0]': ssnInfo.middle,
+    'ssna3[0]': ssnInfo.last,
+    'dateofbirth1[0]': dobInfo.month,
+    'dateofbirth2[0]': dobInfo.day,
+    'dateofbirth3[0]': dobInfo.year,
+    'noandstreet1[0]': dd214.address,
+    'city1[0]': dd214.city,
+    'state1[0]': dd214.state,
+    'zip1[0]': dd214.zip,
+    'primaryphone1[0]': `${phoneInfo.middle}${phoneInfo.last}`,
+    'areacodep1[0]': phoneInfo.areaCode,
+    'email1[0]': dd214.email,
+  };
+
+  for (const [fieldName, value] of Object.entries(fieldMap)) {
+    if (value && setTextField(form, fieldName, value)) {
+      filledCount++;
+    }
+  }
+
+  // Service info on subform[4]
+  const serviceFieldMap: Record<string, string> = {
+    'Dateentered1[0]': entryInfo.month + entryInfo.day + entryInfo.year,
+    'Dateseperated1[0]': sepInfo.month + sepInfo.day + sepInfo.year,
+    'servicecomp1[0]': dd214.branch,
+  };
+
+  for (const [fieldName, value] of Object.entries(serviceFieldMap)) {
+    if (value && setTextField(form, fieldName, value)) {
+      filledCount++;
+    }
+  }
+
+  return filledCount;
+}
+
+/**
+ * Fill VA Form 26-1880 (Home Loan COE)
+ */
+async function fillForm26_1880(
+  pdf: PDFDocument,
+  dd214: DD214Data,
+  questionnaire: QuestionnaireData
+): Promise<number> {
+  const form = pdf.getForm();
+  let filledCount = 0;
+
+  const ssnInfo = parseSSN(dd214.ssn);
+  const phoneInfo = parsePhone(dd214.phone);
+  const dobInfo = parseDate(dd214.dob);
+  const entryInfo = parseDate(dd214.enteredActiveDuty);
+  const sepInfo = parseDate(dd214.separationDate);
+
+  // Format full address
+  const fullAddress = formatFullAddress(dd214.address, dd214.city, dd214.state, dd214.zip);
+
+  // Format date as MM/DD/YYYY
+  const formattedDOB = dobInfo.month && dobInfo.day && dobInfo.year
+    ? `${dobInfo.month}/${dobInfo.day}/${dobInfo.year}`
+    : '';
+
+  // Format phone
+  const formattedPhone = phoneInfo.areaCode && phoneInfo.middle && phoneInfo.last
+    ? `(${phoneInfo.areaCode}) ${phoneInfo.middle}-${phoneInfo.last}`
+    : '';
+
+  // Format entry and separation dates
+  const formattedEntry = entryInfo.month && entryInfo.day && entryInfo.year
+    ? `${entryInfo.month}/${entryInfo.day}/${entryInfo.year}`
+    : '';
+
+  const formattedSep = sepInfo.month && sepInfo.day && sepInfo.year
+    ? `${sepInfo.month}/${sepInfo.day}/${sepInfo.year}`
+    : '';
+
+  const fieldMap: Record<string, string> = {
+    'NameOfVeteran[0]': dd214.name,
+    'Address_NumberandStreetorRuralRoute_City_or_PO_State_ZIPCode[0]': fullAddress,
+    'SSN[0]': `${ssnInfo.first}-${ssnInfo.middle}-${ssnInfo.last}`,
+    'DateOfBirth[0]': formattedDOB,
+    'TelephoneNumber[0]': formattedPhone,
+    'Email[0]': dd214.email,
+    'BranchOfService11A1[0]': dd214.branch,
+    'DateEntered11A1[0]': formattedEntry,
+    'DateSeparated11A1[0]': formattedSep,
+  };
+
+  for (const [fieldName, value] of Object.entries(fieldMap)) {
+    if (value && setTextField(form, fieldName, value)) {
+      filledCount++;
+    }
+  }
+
+  return filledCount;
+}
+
+/**
+ * Load and fill a VA form PDF with veteran data
+ * Fetches the PDF from the public/forms/ directory, fills it, and flattens the form
+ *
+ * @param formNumber - The VA form number (e.g., "21-0966", "21-526EZ")
+ * @param dd214 - DD214 data from discharge papers
+ * @param questionnaire - Questionnaire data from user responses
+ * @returns FillVAFormResult with PDF bytes, filled field count, and total field count
+ */
+export async function fillVAForm(
+  formNumber: string,
+  dd214: DD214Data,
+  questionnaire: QuestionnaireData
+): Promise<FillVAFormResult> {
+  // Get the PDF file path
+  const pdfPath = PDF_FILES[formNumber];
+  if (!pdfPath) {
+    throw new Error(`Unknown form number: ${formNumber}`);
+  }
+
+  // Fetch the PDF from the public directory
+  const response = await fetch(pdfPath);
+  if (!response.ok) {
+    throw new Error(`Failed to load PDF: ${formNumber} from ${pdfPath}`);
+  }
+
+  const pdfBytes = await response.arrayBuffer();
+
+  // Load the PDF document
+  // Using ignoreEncryption: true because some VA forms have XFA encryption
+  // pdf-lib will remove XFA but the form fields still work
+  const pdf = await PDFDocument.load(new Uint8Array(pdfBytes), { ignoreEncryption: true });
+
+  let filledCount = 0;
+
+  // Route to form-specific filler based on form number
+  switch (formNumber) {
+    case '21-0966':
+      filledCount = await fillForm21_0966(pdf, dd214, questionnaire);
+      break;
+    case '21-526EZ':
+      filledCount = await fillForm21_526EZ(pdf, dd214, questionnaire);
+      break;
+    case '10-10EZ':
+      filledCount = await fillForm10_10EZ(pdf, dd214, questionnaire);
+      break;
+    case '22-1990':
+      filledCount = await fillForm22_1990(pdf, dd214, questionnaire);
+      break;
+    case '26-1880':
+      filledCount = await fillForm26_1880(pdf, dd214, questionnaire);
+      break;
+    default:
+      throw new Error(`Form filler not implemented: ${formNumber}`);
+  }
+
+  // Count total fields in the form
+  const form = pdf.getForm();
+  const fields = form.getFields();
+  const totalFields = fields.length;
+
+  // Note: We do NOT flatten the form so users can still edit fields in their PDF viewer
+  // To flatten (make fields permanent text), uncomment:
+  // form.flatten();
+
+  // Save the filled PDF
+  const filledPdfBytes = await pdf.save();
+
+  return {
+    pdfBytes: filledPdfBytes,
+    filledCount,
+    totalFields,
+  };
 }
