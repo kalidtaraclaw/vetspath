@@ -11,9 +11,15 @@ import {
   type EligibilityResults,
   type BenefitResult,
 } from "@/lib/rules-engine";
+import { evaluateStateBenefits } from "@/lib/state-benefits-engine";
+import { getStateName, resolveState } from "@/lib/zip-to-state";
+import { SUPPORTED_STATES } from "@/lib/state-benefits";
+import type { MatchedStateBenefit } from "@/lib/state-benefits/types";
 import PROFILES from "@/data/profiles";
 import DocumentUpload from "@/components/DocumentUpload";
 import DynamicQuestionnaire from "@/components/DynamicQuestionnaire";
+import StateBenefits from "@/components/StateBenefits";
+import FormPreFill from "@/components/FormPreFill";
 import type { UploadedDocument } from "@/lib/ocr-pipeline";
 
 // ─── AQUIA BRAND INLINE STYLES ──────────────────────────────────────────
@@ -77,11 +83,13 @@ function StepIndicator({ currentStep }: { currentStep: number }) {
 // ─── STEP 1: DD-214 FORM ────────────────────────────────────────────────
 
 function DD214Form({
-  data, onChange, onSubmit,
+  data, onChange, onSubmit, stateInput, onStateChange,
 }: {
   data: Partial<DD214Data>;
   onChange: (d: Partial<DD214Data>) => void;
   onSubmit: () => void;
+  stateInput: string;
+  onStateChange: (v: string) => void;
 }) {
   const [uploadedDocs, setUploadedDocs] = useState<UploadedDocument[]>([]);
   const [hasExtracted, setHasExtracted] = useState(false);
@@ -225,6 +233,27 @@ function DD214Form({
               style={{ border: `1px solid ${brand.silver}`, outlineColor: brand.azure }}
               value={data.narrativeReason || ""} onChange={e => set("narrativeReason", e.target.value)} />
           </div>
+
+          {/* State/ZIP for State Benefits */}
+          <div className="rounded-lg p-4" style={{ backgroundColor: brand.ice, border: `1px solid ${brand.sky}` }}>
+            <label htmlFor="state-zip" className="block text-sm font-medium mb-1" style={{ color: brand.midnight }}>
+              Current State or ZIP Code
+            </label>
+            <p className="text-xs mb-2" style={{ color: brand.royal, opacity: 0.7 }}>
+              Enter your state (e.g., TX) or ZIP code to discover state-specific veteran benefits
+            </p>
+            <input type="text" id="state-zip" className="w-full rounded-lg p-2.5 text-sm focus:outline-2 focus:outline-offset-0"
+              placeholder="e.g., TX or 76544"
+              style={{ border: `1px solid ${brand.silver}`, outlineColor: brand.azure }}
+              value={stateInput} onChange={e => onStateChange(e.target.value)} />
+            {stateInput && resolveState(stateInput) && (
+              <p className="text-xs mt-1" style={{ color: brand.azure }}>
+                {SUPPORTED_STATES.includes(resolveState(stateInput) || "")
+                  ? `✓ ${getStateName(resolveState(stateInput)!)} — state benefits available`
+                  : `${getStateName(resolveState(stateInput)!)} — state benefits coming soon`}
+              </p>
+            )}
+          </div>
         </div>
       </fieldset>
 
@@ -303,9 +332,10 @@ function BenefitCard({
 }
 
 function ResultsDashboard({
-  results, onNext, onBack,
+  results, onNext, onBack, stateBenefits, resolvedState,
 }: {
   results: EligibilityResults; onNext: () => void; onBack: () => void;
+  stateBenefits: MatchedStateBenefit[]; resolvedState: string | null;
 }) {
   return (
     <main className="max-w-3xl mx-auto" id="main-content">
@@ -335,6 +365,17 @@ function ResultsDashboard({
       <BenefitCard title="Aid & Attendance" icon="&#127998;" result={results.aidAttendance} accentColor={brand.sky} />
       <BenefitCard title="Secondary Conditions" icon="&#128279;" result={results.secondaryConditions} accentColor={brand.midnight} />
 
+      {/* State Benefits Section */}
+      {resolvedState && (
+        <div className="mt-6">
+          <StateBenefits
+            benefits={stateBenefits}
+            stateName={getStateName(resolvedState) || resolvedState}
+            stateCode={resolvedState}
+          />
+        </div>
+      )}
+
       <div className="flex gap-3 mt-6">
         <button onClick={onBack} className="px-6 py-3 rounded-lg font-medium focus:outline-2 focus:outline-offset-0"
           style={{ border: `1px solid ${brand.silver}`, color: brand.midnight, outlineColor: brand.azure }}>
@@ -351,7 +392,7 @@ function ResultsDashboard({
 
 // ─── STEP 4: FORMS & DOCUMENTS ──────────────────────────────────────────
 
-function FormsAndDocs({ results, onBack }: { results: EligibilityResults; onBack: () => void }) {
+function FormsAndDocs({ results, onBack, dd214, questionnaire }: { results: EligibilityResults; onBack: () => void; dd214: Partial<DD214Data>; questionnaire: Partial<QuestionnaireData> }) {
   const allForms = [
     ...results.disabilityComp.forms.map(f => ({ ...f, benefit: "Disability Compensation" })),
     ...results.healthcare.forms.map(f => ({ ...f, benefit: "Healthcare" })),
@@ -386,13 +427,20 @@ function FormsAndDocs({ results, onBack }: { results: EligibilityResults; onBack
       <div className="p-4 mb-6 rounded-lg" style={{ backgroundColor: brand.ice, borderLeft: `4px solid ${brand.royal}` }}>
         <h2 className="font-semibold mb-1" style={{ color: brand.midnight }}>Your Personalized Forms Package</h2>
         <p className="text-sm" style={{ color: brand.royal }}>
-          Based on your eligibility analysis, here are the forms you need and the documents to gather.
-          In the full version, we&apos;ll pre-fill these forms for you.
+          Based on your eligibility analysis, here are the forms you need. You can pre-fill them with your information
+          and download ready-to-review PDFs, or access the official forms on VA.gov.
         </p>
       </div>
 
+      {/* Auto-Fill Section */}
+      <FormPreFill
+        dd214={dd214 as DD214Data}
+        questionnaire={questionnaire as QuestionnaireData}
+        recommendedForms={allForms}
+      />
+
       <section>
-        <h3 className="text-lg font-bold mb-3" style={{ color: brand.midnight }}>Forms to File</h3>
+        <h3 className="text-lg font-bold mb-3" style={{ color: brand.midnight }}>Official Forms on VA.gov</h3>
         <div className="space-y-3 mb-8">
           {allForms.map((f, i) => {
             const ps = priorityStyles[f.priority];
@@ -504,19 +552,37 @@ export default function Home() {
   const [questionnaire, setQuestionnaire] = useState<Partial<QuestionnaireData>>({ conditions: [""] });
   const [results, setResults] = useState<EligibilityResults | null>(null);
   const [activeProfile, setActiveProfile] = useState<string | null>(null);
+  const [stateInput, setStateInput] = useState("");
+  const [stateBenefits, setStateBenefits] = useState<MatchedStateBenefit[]>([]);
+  const [resolvedState, setResolvedState] = useState<string | null>(null);
 
   const handleDD214Submit = useCallback(() => setStep(1), []);
   const handleQuestionnaireSubmit = useCallback(() => {
     const r = evaluateEligibility(dd214 as DD214Data, questionnaire);
     setResults(r);
+
+    // Evaluate state benefits if state/ZIP provided
+    const stateVal = (questionnaire as any).state || stateInput;
+    if (stateVal) {
+      const code = resolveState(stateVal);
+      if (code && SUPPORTED_STATES.includes(code)) {
+        const sb = evaluateStateBenefits(dd214 as DD214Data, questionnaire as QuestionnaireData, code);
+        setStateBenefits(sb);
+        setResolvedState(code);
+      }
+    }
+
     setStep(2);
-  }, [dd214, questionnaire]);
+  }, [dd214, questionnaire, stateInput]);
 
   const resetAll = useCallback(() => {
     setDD214({});
     setQuestionnaire({ conditions: [""] });
     setResults(null);
     setActiveProfile(null);
+    setStateInput("");
+    setStateBenefits([]);
+    setResolvedState(null);
     setStep(0);
   }, []);
 
@@ -528,10 +594,17 @@ export default function Home() {
     const profile = PROFILES.find(p => p.id === profileId);
     if (!profile) return;
     setDD214(profile.dd214 as Partial<DD214Data>);
-    setQuestionnaire(profile.questionnaire as Partial<QuestionnaireData>);
+    const q = profile.questionnaire as Partial<QuestionnaireData> & { state?: string; zip?: string };
+    setQuestionnaire(q);
+    // Set state input from profile
+    if (q.state) setStateInput(q.state);
+    else if (q.zip) setStateInput(q.zip);
+    else setStateInput("");
     setActiveProfile(profileId);
     setStep(0);
     setResults(null);
+    setStateBenefits([]);
+    setResolvedState(null);
   }, [resetAll]);
 
   return (
@@ -577,15 +650,16 @@ export default function Home() {
       <div className="max-w-4xl mx-auto px-4 py-6 sm:py-8">
         <StepIndicator currentStep={step} />
 
-        {step === 0 && <DD214Form data={dd214} onChange={setDD214} onSubmit={handleDD214Submit} />}
+        {step === 0 && <DD214Form data={dd214} onChange={setDD214} onSubmit={handleDD214Submit} stateInput={stateInput} onStateChange={setStateInput} />}
         {step === 1 && (
           <DynamicQuestionnaire dd214={dd214} data={questionnaire} onChange={setQuestionnaire}
             onSubmit={handleQuestionnaireSubmit} onBack={() => setStep(0)} />
         )}
         {step === 2 && results && (
-          <ResultsDashboard results={results} onNext={() => setStep(3)} onBack={() => setStep(1)} />
+          <ResultsDashboard results={results} onNext={() => setStep(3)} onBack={() => setStep(1)}
+            stateBenefits={stateBenefits} resolvedState={resolvedState} />
         )}
-        {step === 3 && results && <FormsAndDocs results={results} onBack={() => setStep(2)} />}
+        {step === 3 && results && <FormsAndDocs results={results} onBack={() => setStep(2)} dd214={dd214} questionnaire={questionnaire} />}
       </div>
 
       {/* Footer */}

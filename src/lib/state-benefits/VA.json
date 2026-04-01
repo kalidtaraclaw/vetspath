@@ -1,0 +1,126 @@
+{
+  "state": "VA",
+  "stateName": "Virginia",
+  "lastUpdated": "2026-01-10",
+  "benefits": [
+    {
+      "id": "va-income-tax-military-retirement",
+      "state": "VA",
+      "category": "income-tax",
+      "name": "Military Retirement Income Tax Subtraction",
+      "description": "Military retirement pay is fully exempt from Virginia state income tax. This subtraction is phased in and fully effective as of 2025.",
+      "estimatedValue": "$3,000–$8,000/year (depending on retirement pay)",
+      "eligibility": [
+        { "field": "militaryRetirementIncome", "operator": "exists", "value": true }
+      ],
+      "sourceUrl": "https://www.tax.virginia.gov/individual-income-tax/deductions-and-credits",
+      "lastUpdated": "2026-01-10",
+      "notes": "Fully phased in as of tax year 2025. Applies to federal military retirement only."
+    },
+    {
+      "id": "va-prop-tax-100-disabled",
+      "state": "VA",
+      "category": "property-tax",
+      "name": "Property Tax Exemption (100% P&T Disabled)",
+      "description": "Veterans with 100% permanent and total (P&T) service-connected disability rating receive complete exemption from property taxes.",
+      "estimatedValue": "$2,500–$8,000/year",
+      "eligibility": [
+        { "field": "disabilityRating", "operator": "eq", "value": 100 },
+        { "field": "residency", "operator": "true", "value": true }
+      ],
+      "sourceUrl": "https://www.deq.virginia.gov/air/state-taxation-program/property-tax-exemptions-veterans",
+      "lastUpdated": "2026-01-10",
+      "notes": "Exemption applies to principal residence and up to 5 acres of associated land."
+    },
+    {
+      "id": "va-vmsdep",
+      "state": "VA",
+      "category": "education",
+      "name": "Virginia Military Survivors & Dependents Education Program (VMSDEP)",
+      "description": "Free tuition at Virginia state colleges and universities for dependents of 90%+ permanently and totally disabled veterans.",
+      "estimatedValue": "Full tuition (up to $12,000/year)",
+      "eligibility": [
+        { "field": "disabilityRating", "operator": "gte", "value": 90 },
+        { "field": "residency", "operator": "true", "value": true },
+        { "field": "relationship", "operator": "in", "value": ["spouse", "child", "dependent"] }
+      ],
+      "sourceUrl": "https://www.schev.edu/students-families/student-aid-programs/vmsdep",
+      "lastUpdated": "2026-01-10",
+      "notes": "Available to eligible dependents; also covers surviving spouses and children of deceased 90%+ disabled veterans."
+    },
+    {
+      "id": "va-vehicle-tax-reduction",
+      "state": "VA",
+      "category": "income-tax",
+      "name": "Personal Property Tax Exemption (One Vehicle)",
+      "description": "Veterans with 100% P&T disability rating are exempt from personal property tax on one vehicle.",
+      "estimatedValue": "$300–$800/year",
+      "eligibility": [
+        { "field": "disabilityRating", "operator": "eq", "value": 100 },
+        { "field": "residency", "operator": "true", "value": true }
+      ],
+      "sourceUrl": "https://www.deq.virginia.gov/air/state-taxation-program/property-tax-exemptions-veterans",
+      "lastUpdated": "2026-01-10",
+      "notes": "Exemption applies to one motor vehicle only; must be owned and titled in Virginia."
+    },
+    {
+      "id": "va-hunting-fishing",
+      "state": "VA",
+      "category": "recreation",
+      "name": "Free Hunting and Fishing License",
+      "description": "Veterans with 70% or higher service-connected disability rating receive a free hunting and fishing license.",
+      "estimatedValue": "$50–$80/year",
+      "eligibility": [
+        { "field": "disabilityRating", "operator": "gte", "value": 70 },
+        { "field": "residency", "operator": "true", "value": true }
+      ],
+      "sourceUrl": "https://www.dwr.virginia.gov/fishing/licenses-permits/",
+      "lastUpdated": "2026-01-10",
+      "notes": "Available through Virginia Department of Wildlife Resources."
+    },
+    {
+      "id": "va-employment-preference",
+      "state": "VA",
+      "category": "employment",
+      "name": "State Employment Preference",
+      "description": "Veterans receive preference points in Virginia state civil service hiring. Disabled veterans receive additional points.",
+      "estimatedValue": "5–10 bonus points on hiring exams",
+      "eligibility": [
+        { "field": "characterOfDischarge", "operator": "in", "value": ["Honorable", "General (Under Honorable)"] }
+      ],
+      "sourceUrl": "https://www.deq.virginia.gov/employment/veterans-hiring-preference",
+      "lastUpdated": "2026-01-10",
+      "notes": "Additional preference provided to 100% disabled veterans."
+    },
+    {
+      "id": "va-disabled-vet-plates",
+      "state": "VA",
+      "category": "recreation",
+      "name": "Disabled Veteran License Plates",
+      "description": "Disabled veterans receive free specialty license plates providing identification and potential parking benefits.",
+      "estimatedValue": "Free plates (saves ~$25/year)",
+      "eligibility": [
+        { "field": "disabilityRating", "operator": "gte", "value": 20 },
+        { "field": "residency", "operator": "true", "value": true }
+      ],
+      "sourceUrl": "https://www.dmvnow.com/webdoc/pdf/plate_guide.pdf",
+      "lastUpdated": "2026-01-10",
+      "notes": "Blue and white plates for disabled veterans; may provide local parking benefits."
+    },
+    {
+      "id": "va-v3-program",
+      "state": "VA",
+      "category": "employment",
+      "name": "Virginia Values Veterans (V3) Program",
+      "description": "State program connecting veterans to participating employers and workforce resources. Provides job training and placement assistance.",
+      "estimatedValue": "Job placement and training (value varies)",
+      "eligibility": [
+        { "field": "characterOfDischarge", "operator": "in", "value": ["Honorable", "General (Under Honorable)"] },
+        { "field": "residency", "operator": "true", "value": true }
+      ],
+      "sourceUrl": "https://www.voswork.com/",
+      "lastUpdated": "2026-01-10",
+      "notes": "Free workforce development and employer networking for Virginia veterans."
+    }
+  ]
+}

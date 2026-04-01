@@ -108,6 +108,8 @@
     "hasBuddyStatements": true,
     "cannotWork": true,
     "disabilityRating": 0,
-    "hasFiledIntentToFile": false
+    "hasFiledIntentToFile": false,
+    "state": "TX",
+    "zip": "76544"
   }
 }

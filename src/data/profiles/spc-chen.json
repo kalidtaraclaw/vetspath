@@ -55,6 +55,8 @@
     "hasBuddyStatements": false,
     "cannotWork": false,
     "disabilityRating": 30,
-    "hasFiledIntentToFile": false
+    "hasFiledIntentToFile": false,
+    "state": "VA",
+    "zip": "23665"
   }
 }

@@ -59,6 +59,8 @@
     "cannotWork": true,
     "disabilityRating": 0,
     "hasFiledIntentToFile": false,
+    "state": "NC",
+    "zip": "28542",
     "campLejeuneResident": true,
     "campLejeuneYearsStart": 1975,
     "campLejeuneYearsEnd": 1986

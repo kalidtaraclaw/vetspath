@@ -1,0 +1,143 @@
+{
+  "state": "TX",
+  "stateName": "Texas",
+  "lastUpdated": "2026-01-15",
+  "benefits": [
+    {
+      "id": "tx-prop-tax-100",
+      "state": "TX",
+      "category": "property-tax",
+      "name": "Complete Property Tax Exemption (100% Disabled)",
+      "description": "Veterans with 100% VA disability rating receive complete exemption from property taxes on their homestead and up to 1 acre of land.",
+      "estimatedValue": "$4,000–$12,000/year",
+      "eligibility": [
+        { "field": "disabilityRating", "operator": "eq", "value": 100 },
+        { "field": "residency", "operator": "true", "value": true }
+      ],
+      "sourceUrl": "https://comptroller.texas.gov/taxes/property-tax/exemptions/disabled-veteran.php",
+      "lastUpdated": "2026-01-15",
+      "notes": "Exemption applies to homestead principal residence and up to 1 acre of land adjacent to dwelling."
+    },
+    {
+      "id": "tx-prop-tax-partial",
+      "state": "TX",
+      "category": "property-tax",
+      "name": "Partial Property Tax Exemption (10–90% Disabled)",
+      "description": "Veterans with service-connected disability ratings of 10% to 90% receive a partial exemption based on their disability percentage.",
+      "estimatedValue": "$1,000–$10,000/year",
+      "eligibility": [
+        { "field": "disabilityRating", "operator": "gte", "value": 10 },
+        { "field": "disabilityRating", "operator": "lte", "value": 90 },
+        { "field": "residency", "operator": "true", "value": true }
+      ],
+      "sourceUrl": "https://comptroller.texas.gov/taxes/property-tax/exemptions/disabled-veteran.php",
+      "lastUpdated": "2026-01-15",
+      "notes": "Exemption amount correlates with disability percentage: 10% = smallest exemption, 90% = largest partial exemption."
+    },
+    {
+      "id": "tx-prop-tax-spouse",
+      "state": "TX",
+      "category": "property-tax",
+      "name": "Property Tax Exemption (Surviving Spouse)",
+      "description": "Surviving spouse of a 100% P&T disabled veteran retains the full property tax exemption on the homestead.",
+      "estimatedValue": "$4,000–$12,000/year",
+      "eligibility": [
+        { "field": "survivingSpouse", "operator": "true", "value": true },
+        { "field": "veteranDisabilityRating", "operator": "eq", "value": 100 }
+      ],
+      "sourceUrl": "https://comptroller.texas.gov/taxes/property-tax/exemptions/disabled-veteran.php",
+      "lastUpdated": "2026-01-15",
+      "notes": "Exemption continues for surviving spouse after veteran's death."
+    },
+    {
+      "id": "tx-hazelwood-act",
+      "state": "TX",
+      "category": "education",
+      "name": "Hazelwood Act (Free Tuition)",
+      "description": "Texas veterans with Honorable discharge receive tuition assistance (150 credit hours) at Texas public colleges and universities, transferable to eligible dependents.",
+      "estimatedValue": "Full tuition (up to 150 credit hours)",
+      "eligibility": [
+        { "field": "characterOfDischarge", "operator": "eq", "value": "Honorable" },
+        { "field": "residency", "operator": "true", "value": true }
+      ],
+      "sourceUrl": "https://www.tvc.texas.gov/hazelwood-act.html",
+      "lastUpdated": "2026-01-15",
+      "notes": "Legacy Act allows transfer to spouse and children if veteran did not use full benefit. Covers tuition and mandatory fees only."
+    },
+    {
+      "id": "tx-disabled-vet-plates",
+      "state": "TX",
+      "category": "recreation",
+      "name": "Disabled Veteran License Plates",
+      "description": "Veterans with 50% or higher service-connected disability rating receive free specialty license plates.",
+      "estimatedValue": "Free plates (saves ~$50 registration)",
+      "eligibility": [
+        { "field": "disabilityRating", "operator": "gte", "value": 50 },
+        { "field": "residency", "operator": "true", "value": true }
+      ],
+      "sourceUrl": "https://www.dps.texas.gov/driver-license-issuance-and-renewal/license-plates",
+      "lastUpdated": "2026-01-15",
+      "notes": "Distinctive purple and gold plates may provide parking benefits and identification."
+    },
+    {
+      "id": "tx-vehicle-sales-tax",
+      "state": "TX",
+      "category": "income-tax",
+      "name": "Vehicle Sales Tax Exemption (50%+ Disabled)",
+      "description": "Veterans with 50% or higher disability rating are exempt from sales tax on one vehicle purchase.",
+      "estimatedValue": "$1,000–$3,000 (depends on vehicle price)",
+      "eligibility": [
+        { "field": "disabilityRating", "operator": "gte", "value": 50 },
+        { "field": "residency", "operator": "true", "value": true }
+      ],
+      "sourceUrl": "https://comptroller.texas.gov/taxes/sales-tax/exemptions/disability.php",
+      "lastUpdated": "2026-01-15",
+      "notes": "One-time exemption per veteran. Vehicle must be titled in Texas."
+    },
+    {
+      "id": "tx-hunting-fishing",
+      "state": "TX",
+      "category": "recreation",
+      "name": "Free Hunting and Fishing License",
+      "description": "Veterans with 50% or higher service-connected disability rating receive a free lifetime hunting and fishing combo license.",
+      "estimatedValue": "$90–$120/year",
+      "eligibility": [
+        { "field": "disabilityRating", "operator": "gte", "value": 50 },
+        { "field": "residency", "operator": "true", "value": true }
+      ],
+      "sourceUrl": "https://tpwd.texas.gov/licenses/hunting-fishing-combo.phtml",
+      "lastUpdated": "2026-01-15",
+      "notes": "Lifetime license; issued by Texas Parks and Wildlife Department."
+    },
+    {
+      "id": "tx-veterans-land-board",
+      "state": "TX",
+      "category": "housing-care",
+      "name": "Texas Veterans Land Board Loans",
+      "description": "Below-market loans for purchasing land or improving homes. Available to Texas veterans with Honorable or General discharge.",
+      "estimatedValue": "Savings of 1–2% on interest rate",
+      "eligibility": [
+        { "field": "characterOfDischarge", "operator": "in", "value": ["Honorable", "General (Under Honorable)"] },
+        { "field": "residency", "operator": "true", "value": true }
+      ],
+      "sourceUrl": "https://www.tvc.texas.gov/land-loan-program.html",
+      "lastUpdated": "2026-01-15",
+      "notes": "Loans up to $100,000 for land; competitive rates and flexible terms."
+    },
+    {
+      "id": "tx-state-employment-preference",
+      "state": "TX",
+      "category": "employment",
+      "name": "State Employment Preference",
+      "description": "Disabled veterans receive preference points in Texas state civil service hiring.",
+      "estimatedValue": "5–10 bonus points on state job exams",
+      "eligibility": [
+        { "field": "disabilityRating", "operator": "gte", "value": 10 },
+        { "field": "characterOfDischarge", "operator": "in", "value": ["Honorable", "General (Under Honorable)"] }
+      ],
+      "sourceUrl": "https://www.hr.texas.gov/employees/hiring/veterans-hiring-preference.html",
+      "lastUpdated": "2026-01-15",
+      "notes": "Preference applies to competitive examinations for state positions."
+    }
+  ]
+}

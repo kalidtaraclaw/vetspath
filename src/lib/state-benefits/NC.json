@@ -1,0 +1,124 @@
+{
+  "state": "NC",
+  "stateName": "North Carolina",
+  "lastUpdated": "2026-01-12",
+  "benefits": [
+    {
+      "id": "nc-prop-tax-exemption",
+      "state": "NC",
+      "category": "property-tax",
+      "name": "Property Tax Exemption (100% P&T Disabled)",
+      "description": "Veterans with 100% permanent and total service-connected disability rating receive exemption on the first $45,000 of assessed property value.",
+      "estimatedValue": "$1,200–$4,000/year",
+      "eligibility": [
+        { "field": "disabilityRating", "operator": "eq", "value": 100 },
+        { "field": "residency", "operator": "true", "value": true }
+      ],
+      "sourceUrl": "https://www.ncdor.gov/taxes/property-tax/homestead-property-tax-deduction",
+      "lastUpdated": "2026-01-12",
+      "notes": "Exemption applies to principal dwelling and non-business property in same county."
+    },
+    {
+      "id": "nc-motor-vehicle-exemption",
+      "state": "NC",
+      "category": "property-tax",
+      "name": "Motor Vehicle Property Tax Exemption",
+      "description": "Veterans with 100% P&T disability rating are exempt from personal property tax on one motor vehicle.",
+      "estimatedValue": "$250–$600/year",
+      "eligibility": [
+        { "field": "disabilityRating", "operator": "eq", "value": 100 },
+        { "field": "residency", "operator": "true", "value": true }
+      ],
+      "sourceUrl": "https://www.ncdor.gov/taxes/property-tax/motor-vehicles-tax-exemptions",
+      "lastUpdated": "2026-01-12",
+      "notes": "One vehicle per veteran; must be registered and titled in North Carolina."
+    },
+    {
+      "id": "nc-income-tax-military-retirement",
+      "state": "NC",
+      "category": "income-tax",
+      "name": "Military Retirement Income Tax Exclusion",
+      "description": "Military retirement pay is fully exempt from North Carolina state income tax.",
+      "estimatedValue": "$4,000–$9,000/year",
+      "eligibility": [
+        { "field": "militaryRetirementIncome", "operator": "exists", "value": true }
+      ],
+      "sourceUrl": "https://www.ncdor.gov/taxes/individual-income-tax/military-retirement",
+      "lastUpdated": "2026-01-12",
+      "notes": "Applies to all military retirement income from federal service."
+    },
+    {
+      "id": "nc-hunting-fishing",
+      "state": "NC",
+      "category": "recreation",
+      "name": "Free Hunting and Fishing License",
+      "description": "Veterans with 50% or higher service-connected disability rating receive a free lifetime hunting and fishing license.",
+      "estimatedValue": "$90–$120/year",
+      "eligibility": [
+        { "field": "disabilityRating", "operator": "gte", "value": 50 },
+        { "field": "residency", "operator": "true", "value": true }
+      ],
+      "sourceUrl": "https://www.ncwildlife.org/Licensing/Hunting-Licenses",
+      "lastUpdated": "2026-01-12",
+      "notes": "Lifetime license issued by NC Wildlife Resources Commission."
+    },
+    {
+      "id": "nc-ng-tuition-assistance",
+      "state": "NC",
+      "category": "education",
+      "name": "North Carolina National Guard Tuition Assistance",
+      "description": "State tuition assistance for North Carolina National Guard members for higher education programs.",
+      "estimatedValue": "Up to $5,000/year",
+      "eligibility": [
+        { "field": "branch", "operator": "eq", "value": "National Guard" },
+        { "field": "residency", "operator": "true", "value": true }
+      ],
+      "sourceUrl": "https://www.nc.ng.mil/Public-Affairs/News-and-Information/",
+      "lastUpdated": "2026-01-12",
+      "notes": "Available for tuition and fees at approved NC institutions."
+    },
+    {
+      "id": "nc-employment-preference",
+      "state": "NC",
+      "category": "employment",
+      "name": "State Employment Preference",
+      "description": "Veterans receive preference in North Carolina state civil service hiring.",
+      "estimatedValue": "5–10 bonus points on hiring exams",
+      "eligibility": [
+        { "field": "characterOfDischarge", "operator": "in", "value": ["Honorable", "General (Under Honorable)"] }
+      ],
+      "sourceUrl": "https://www.ncdps.gov/",
+      "lastUpdated": "2026-01-12",
+      "notes": "Preference applied by state hiring agencies."
+    },
+    {
+      "id": "nc-camp-lejeune-benefits",
+      "state": "NC",
+      "category": "housing-care",
+      "name": "Camp Lejeune Family and Veteran Recognition Program",
+      "description": "Special services and recognition for Camp Lejeune-exposed veterans and families. Includes access to health screenings and support resources.",
+      "estimatedValue": "Health screenings and support services (varies)",
+      "eligibility": [
+        { "field": "campLejeune", "operator": "true", "value": true }
+      ],
+      "sourceUrl": "https://www.ncdhhs.gov/camp-lejeune-water-contamination",
+      "lastUpdated": "2026-01-12",
+      "notes": "North Carolina recognizes Camp Lejeune water contamination and provides dedicated support."
+    },
+    {
+      "id": "nc-veterans-scholarship",
+      "state": "NC",
+      "category": "education",
+      "name": "North Carolina Veterans Scholarship",
+      "description": "Scholarships available for children of disabled or deceased veterans. Various programs through state and community colleges.",
+      "estimatedValue": "$1,000–$8,000/year",
+      "eligibility": [
+        { "field": "relationship", "operator": "in", "value": ["child", "dependent"] },
+        { "field": "disabilityRating", "operator": "gte", "value": 50 }
+      ],
+      "sourceUrl": "https://www.nccommunitycolleges.edu/",
+      "lastUpdated": "2026-01-12",
+      "notes": "Scholarships vary by institution; check with specific NC colleges for availability."
+    }
+  ]
+}
