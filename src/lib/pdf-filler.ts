@@ -15,17 +15,6 @@ import type { DD214Data, QuestionnaireData } from './rules-engine';
 export interface VeteranProfile {
   dd214: DD214Data;
   questionnaire: QuestionnaireData;
-  personalInfo: {
-    ssn?: string;
-    dob?: string;
-    address?: string;
-    city?: string;
-    state?: string;
-    zip?: string;
-    phone?: string;
-    email?: string;
-    gender?: string;
-  };
 }
 
 /**
@@ -34,7 +23,7 @@ export interface VeteranProfile {
 export interface FilledField {
   label: string;
   value: string;
-  source: 'dd214' | 'questionnaire' | 'personal' | 'auto' | 'empty';
+  source: 'dd214' | 'questionnaire' | 'auto' | 'empty';
   required: boolean;
 }
 
@@ -54,7 +43,7 @@ export interface FormFillResult {
 
 /**
  * Resolve a field value from the veteran profile using dot notation
- * @param sourceField - e.g., "dd214.name", "profile.ssn"
+ * @param sourceField - e.g., "dd214.name", "questionnaire.claimedConditions"
  * @param profile - The veteran profile
  * @returns Object with value and source
  */
@@ -84,12 +73,6 @@ function resolveFieldValue(
         value = String(val);
       }
       source = 'questionnaire';
-    }
-  } else if (section === 'profile') {
-    const val = (profile.personalInfo as any)[field];
-    if (val) {
-      value = String(val);
-      source = 'personal';
     }
   } else if (section === 'auto') {
     // Auto fields are not pre-filled from data, they're for user signature/dates
@@ -411,9 +394,7 @@ async function generateFormPDF(
           ? 'DD-214'
           : field.source === 'questionnaire'
             ? 'Questionnaire'
-            : field.source === 'personal'
-              ? 'Profile'
-              : 'Auto';
+            : 'Auto';
 
       const badgeWidth = helvetica.widthOfTextAtSize(badgeText, 6) + 8;
       currentPage.drawRectangle({
@@ -518,7 +499,6 @@ Empty: ${result.emptyCount}
 Pre-filled fields are marked with their source:
 • DD-214 fields from your discharge papers
 • Questionnaire fields from your responses
-• Profile fields from your personal information
 
 Review all fields carefully before submitting the official form.
   `.trim();

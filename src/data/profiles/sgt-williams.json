@@ -13,7 +13,16 @@
     "dutyLocations": "Fort Benning GA, Forward Operating Base Salerno Afghanistan, Combat Outpost Saro Afghanistan, Fort Carson CO",
     "remarks": "Served two deployments to Afghanistan (OEF 2011, OEF 2012-2013). Infantry squad leader during active combat operations Kunar and Paktika provinces. Separated under characterization of Bad Conduct Discharge per administrative review board decision in 2014.",
     "narrativeReason": "Separation by Administrative Action",
-    "totalServiceMonths": 53
+    "totalServiceMonths": 53,
+    "ssn": "123-45-6789",
+    "dob": "1989-08-17",
+    "gender": "Male",
+    "address": "892 Peachtree Blvd Apt 4C",
+    "city": "Columbus",
+    "state": "GA",
+    "zip": "31901",
+    "phone": "7065559876",
+    "email": "james.williams89@email.com"
   },
   "medicalRecords": {
     "vaRecords": [

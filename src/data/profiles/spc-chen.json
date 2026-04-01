@@ -13,7 +13,16 @@
     "dutyLocations": "Joint Base San Antonio-Lackland TX, Langley Air Force Base VA",
     "remarks": "Separated by Administrative Action due to service-related disability sustained during initial skills training. Medical evaluation board recommended disability separation with 30% combined rating. Characterized as Honorable discharge due to disability.",
     "narrativeReason": "Disability",
-    "totalServiceMonths": 4.5
+    "totalServiceMonths": 4.5,
+    "ssn": "456-78-9012",
+    "dob": "2000-04-22",
+    "gender": "Male",
+    "address": "1200 Mercury Blvd Unit 7",
+    "city": "Hampton",
+    "state": "VA",
+    "zip": "23665",
+    "phone": "7575554567",
+    "email": "wei.chen@email.com"
   },
   "medicalRecords": {
     "vaRecords": [
@@ -55,8 +64,6 @@
     "hasBuddyStatements": false,
     "cannotWork": false,
     "disabilityRating": 30,
-    "hasFiledIntentToFile": false,
-    "state": "VA",
-    "zip": "23665"
+    "hasFiledIntentToFile": false
   }
 }

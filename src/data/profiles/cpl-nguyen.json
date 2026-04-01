@@ -13,7 +13,16 @@
     "dutyLocations": "Fort Sill OK, Long Binh Vietnam, Camp Enari Vietnam, Phuoc Vinh Vietnam",
     "remarks": "Three years active duty with 24 months deployed to Vietnam 1969-1971. Artillery forward observer and cannon crewmember. Separated under General discharge status in 1971. Documented exposure to Agent Orange during defoliation operations in Phuoc Vinh and Long Binh areas.",
     "narrativeReason": "Completion of Required Service",
-    "totalServiceMonths": 36
+    "totalServiceMonths": 36,
+    "ssn": "345-67-8901",
+    "dob": "1948-09-14",
+    "gender": "Male",
+    "address": "5678 Oklahoma Ave",
+    "city": "Lawton",
+    "state": "OK",
+    "zip": "73501",
+    "phone": "5805553456",
+    "email": "linh.nguyen48@email.com"
   },
   "medicalRecords": {
     "vaRecords": [

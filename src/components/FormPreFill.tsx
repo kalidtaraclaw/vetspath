@@ -59,18 +59,6 @@ export default function FormPreFill({
   const veteranProfile: VeteranProfile = {
     dd214,
     questionnaire,
-    personalInfo: {
-      // These will need to be filled in manually on the form
-      ssn: undefined,
-      dob: undefined,
-      address: undefined,
-      city: undefined,
-      state: undefined,
-      zip: undefined,
-      phone: undefined,
-      email: undefined,
-      gender: undefined,
-    },
   };
 
   // Extract form number from "VA Form 21-526EZ" -> "21-526EZ"

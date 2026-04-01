@@ -13,7 +13,16 @@
     "dutyLocations": "Marine Barracks Camp Lejeune NC, Marine Air Ground Task Force School Camp Lejeune NC, USS Saipan LHA-2",
     "remarks": "Eleven years active duty service with primary assignment at Camp Lejeune (1975-1986). Resided on base with family quarters. Separated under Other Than Honorable characterization due to administrative action. Medical records document multiple health issues potentially related to Camp Lejeune water contamination.",
     "narrativeReason": "Separation by Administrative Action",
-    "totalServiceMonths": 132
+    "totalServiceMonths": 132,
+    "ssn": "234-56-7890",
+    "dob": "1956-02-28",
+    "gender": "Male",
+    "address": "3400 Marine Blvd",
+    "city": "Jacksonville",
+    "state": "NC",
+    "zip": "28542",
+    "phone": "9105558765",
+    "email": "marcus.johnson@email.com"
   },
   "medicalRecords": {
     "vaRecords": [
@@ -59,8 +68,6 @@
     "cannotWork": true,
     "disabilityRating": 0,
     "hasFiledIntentToFile": false,
-    "state": "NC",
-    "zip": "28542",
     "campLejeuneResident": true,
     "campLejeuneYearsStart": 1975,
     "campLejeuneYearsEnd": 1986

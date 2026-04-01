@@ -83,13 +83,11 @@ function StepIndicator({ currentStep }: { currentStep: number }) {
 // ─── STEP 1: DD-214 FORM ────────────────────────────────────────────────
 
 function DD214Form({
-  data, onChange, onSubmit, stateInput, onStateChange,
+  data, onChange, onSubmit,
 }: {
   data: Partial<DD214Data>;
   onChange: (d: Partial<DD214Data>) => void;
   onSubmit: () => void;
-  stateInput: string;
-  onStateChange: (v: string) => void;
 }) {
   const [uploadedDocs, setUploadedDocs] = useState<UploadedDocument[]>([]);
   const [hasExtracted, setHasExtracted] = useState(false);
@@ -234,26 +232,99 @@ function DD214Form({
               value={data.narrativeReason || ""} onChange={e => set("narrativeReason", e.target.value)} />
           </div>
 
-          {/* State/ZIP for State Benefits */}
-          <div className="rounded-lg p-4" style={{ backgroundColor: brand.ice, border: `1px solid ${brand.sky}` }}>
-            <label htmlFor="state-zip" className="block text-sm font-medium mb-1" style={{ color: brand.midnight }}>
-              Current State or ZIP Code
-            </label>
-            <p className="text-xs mb-2" style={{ color: brand.royal, opacity: 0.7 }}>
-              Enter your state (e.g., TX) or ZIP code to discover state-specific veteran benefits
-            </p>
-            <input type="text" id="state-zip" className="w-full rounded-lg p-2.5 text-sm focus:outline-2 focus:outline-offset-0"
-              placeholder="e.g., TX or 76544"
-              style={{ border: `1px solid ${brand.silver}`, outlineColor: brand.azure }}
-              value={stateInput} onChange={e => onStateChange(e.target.value)} />
-            {stateInput && resolveState(stateInput) && (
-              <p className="text-xs mt-1" style={{ color: brand.azure }}>
-                {SUPPORTED_STATES.includes(resolveState(stateInput) || "")
-                  ? `✓ ${getStateName(resolveState(stateInput)!)} — state benefits available`
-                  : `${getStateName(resolveState(stateInput)!)} — state benefits coming soon`}
+          {/* Personal Information — for form auto-fill */}
+          <div className="rounded-lg p-4 space-y-4" style={{ backgroundColor: brand.ice, border: `1px solid ${brand.sky}` }}>
+            <div>
+              <h3 className="text-sm font-semibold mb-1" style={{ color: brand.midnight }}>Personal &amp; Contact Information</h3>
+              <p className="text-xs mb-3" style={{ color: brand.royal, opacity: 0.7 }}>
+                Used to pre-fill your VA forms. All data stays on your device.
               </p>
-            )}
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="ssn" className="block text-xs font-medium mb-1" style={{ color: brand.midnight }}>SSN (Block 3)</label>
+                <input type="text" id="ssn" className="w-full rounded-lg p-2.5 text-sm focus:outline-2 focus:outline-offset-0"
+                  placeholder="XXX-XX-XXXX"
+                  style={{ border: `1px solid ${brand.silver}`, outlineColor: brand.azure }}
+                  value={data.ssn || ""} onChange={e => set("ssn", e.target.value)} />
+              </div>
+              <div>
+                <label htmlFor="dob" className="block text-xs font-medium mb-1" style={{ color: brand.midnight }}>Date of Birth (Block 5)</label>
+                <input type="date" id="dob" className="w-full rounded-lg p-2.5 text-sm focus:outline-2 focus:outline-offset-0"
+                  style={{ border: `1px solid ${brand.silver}`, outlineColor: brand.azure }}
+                  value={data.dob || ""} onChange={e => set("dob", e.target.value)} />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="gender" className="block text-xs font-medium mb-1" style={{ color: brand.midnight }}>Gender</label>
+                <select id="gender" className="w-full rounded-lg p-2.5 text-sm bg-white focus:outline-2 focus:outline-offset-0"
+                  style={{ border: `1px solid ${brand.silver}`, outlineColor: brand.azure }}
+                  value={data.gender || ""} onChange={e => set("gender", e.target.value)}>
+                  <option value="">Select...</option>
+                  <option>Male</option><option>Female</option>
+                </select>
+              </div>
+              <div>
+                <label htmlFor="vet-phone" className="block text-xs font-medium mb-1" style={{ color: brand.midnight }}>Phone</label>
+                <input type="tel" id="vet-phone" className="w-full rounded-lg p-2.5 text-sm focus:outline-2 focus:outline-offset-0"
+                  placeholder="(555) 123-4567"
+                  style={{ border: `1px solid ${brand.silver}`, outlineColor: brand.azure }}
+                  value={data.phone || ""} onChange={e => set("phone", e.target.value)} />
+              </div>
+            </div>
+
+            <div>
+              <label htmlFor="vet-email" className="block text-xs font-medium mb-1" style={{ color: brand.midnight }}>Email</label>
+              <input type="email" id="vet-email" className="w-full rounded-lg p-2.5 text-sm focus:outline-2 focus:outline-offset-0"
+                placeholder="veteran@email.com"
+                style={{ border: `1px solid ${brand.silver}`, outlineColor: brand.azure }}
+                value={data.email || ""} onChange={e => set("email", e.target.value)} />
+            </div>
+
+            <div>
+              <label htmlFor="vet-address" className="block text-xs font-medium mb-1" style={{ color: brand.midnight }}>Street Address</label>
+              <input type="text" id="vet-address" className="w-full rounded-lg p-2.5 text-sm focus:outline-2 focus:outline-offset-0"
+                placeholder="123 Main St"
+                style={{ border: `1px solid ${brand.silver}`, outlineColor: brand.azure }}
+                value={data.address || ""} onChange={e => set("address", e.target.value)} />
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="col-span-1 sm:col-span-2">
+                <label htmlFor="vet-city" className="block text-xs font-medium mb-1" style={{ color: brand.midnight }}>City</label>
+                <input type="text" id="vet-city" className="w-full rounded-lg p-2.5 text-sm focus:outline-2 focus:outline-offset-0"
+                  placeholder="City"
+                  style={{ border: `1px solid ${brand.silver}`, outlineColor: brand.azure }}
+                  value={data.city || ""} onChange={e => set("city", e.target.value)} />
+              </div>
+              <div>
+                <label htmlFor="vet-state" className="block text-xs font-medium mb-1" style={{ color: brand.midnight }}>State</label>
+                <input type="text" id="vet-state" className="w-full rounded-lg p-2.5 text-sm focus:outline-2 focus:outline-offset-0"
+                  placeholder="TX"
+                  style={{ border: `1px solid ${brand.silver}`, outlineColor: brand.azure }}
+                  value={data.state || ""} onChange={e => set("state", e.target.value)} />
+              </div>
+              <div>
+                <label htmlFor="vet-zip" className="block text-xs font-medium mb-1" style={{ color: brand.midnight }}>ZIP</label>
+                <input type="text" id="vet-zip" className="w-full rounded-lg p-2.5 text-sm focus:outline-2 focus:outline-offset-0"
+                  placeholder="76544"
+                  style={{ border: `1px solid ${brand.silver}`, outlineColor: brand.azure }}
+                  value={data.zip || ""} onChange={e => set("zip", e.target.value)} />
+              </div>
+            </div>
           </div>
+
+          {/* State benefits detection hint */}
+          {(data.state || data.zip) && resolveState(data.state || data.zip || "") && (
+            <p className="text-xs -mt-2" style={{ color: brand.azure }}>
+              {SUPPORTED_STATES.includes(resolveState(data.state || data.zip || "")!)
+                ? `✓ ${getStateName(resolveState(data.state || data.zip || "")!)} — state benefits will be included in your results`
+                : `${getStateName(resolveState(data.state || data.zip || "")!)} — state benefits coming soon`}
+            </p>
+          )}
         </div>
       </fieldset>
 
@@ -552,7 +623,6 @@ export default function Home() {
   const [questionnaire, setQuestionnaire] = useState<Partial<QuestionnaireData>>({ conditions: [""] });
   const [results, setResults] = useState<EligibilityResults | null>(null);
   const [activeProfile, setActiveProfile] = useState<string | null>(null);
-  const [stateInput, setStateInput] = useState("");
   const [stateBenefits, setStateBenefits] = useState<MatchedStateBenefit[]>([]);
   const [resolvedState, setResolvedState] = useState<string | null>(null);
 
@@ -561,8 +631,8 @@ export default function Home() {
     const r = evaluateEligibility(dd214 as DD214Data, questionnaire);
     setResults(r);
 
-    // Evaluate state benefits if state/ZIP provided
-    const stateVal = (questionnaire as any).state || stateInput;
+    // Evaluate state benefits if state/ZIP provided from DD-214 personal info
+    const stateVal = dd214.state || dd214.zip;
     if (stateVal) {
       const code = resolveState(stateVal);
       if (code && SUPPORTED_STATES.includes(code)) {
@@ -573,14 +643,13 @@ export default function Home() {
     }
 
     setStep(2);
-  }, [dd214, questionnaire, stateInput]);
+  }, [dd214, questionnaire]);
 
   const resetAll = useCallback(() => {
     setDD214({});
     setQuestionnaire({ conditions: [""] });
     setResults(null);
     setActiveProfile(null);
-    setStateInput("");
     setStateBenefits([]);
     setResolvedState(null);
     setStep(0);
@@ -594,12 +663,9 @@ export default function Home() {
     const profile = PROFILES.find(p => p.id === profileId);
     if (!profile) return;
     setDD214(profile.dd214 as Partial<DD214Data>);
-    const q = profile.questionnaire as Partial<QuestionnaireData> & { state?: string; zip?: string };
+    const q = profile.questionnaire as Partial<QuestionnaireData>;
     setQuestionnaire(q);
-    // Set state input from profile
-    if (q.state) setStateInput(q.state);
-    else if (q.zip) setStateInput(q.zip);
-    else setStateInput("");
+    // State benefits will auto-evaluate from dd214.state/zip on questionnaire submit
     setActiveProfile(profileId);
     setStep(0);
     setResults(null);
@@ -650,7 +716,7 @@ export default function Home() {
       <div className="max-w-4xl mx-auto px-4 py-6 sm:py-8">
         <StepIndicator currentStep={step} />
 
-        {step === 0 && <DD214Form data={dd214} onChange={setDD214} onSubmit={handleDD214Submit} stateInput={stateInput} onStateChange={setStateInput} />}
+        {step === 0 && <DD214Form data={dd214} onChange={setDD214} onSubmit={handleDD214Submit} />}
         {step === 1 && (
           <DynamicQuestionnaire dd214={dd214} data={questionnaire} onChange={setQuestionnaire}
             onSubmit={handleQuestionnaireSubmit} onBack={() => setStep(0)} />

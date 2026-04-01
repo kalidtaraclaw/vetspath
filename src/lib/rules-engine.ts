@@ -15,6 +15,16 @@ export interface DD214Data {
   remarks: string;
   narrativeReason: string;
   totalServiceMonths?: number;
+  // Personal info — SSN (Block 3), DOB (Block 5), contact info
+  ssn?: string;
+  dob?: string;
+  gender?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
+  phone?: string;
+  email?: string;
 }
 
 export interface QuestionnaireData {

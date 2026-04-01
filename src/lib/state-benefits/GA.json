@@ -1,0 +1,143 @@
+{
+  "state": "GA",
+  "stateName": "Georgia",
+  "lastUpdated": "2026-04-01",
+  "benefits": [
+    {
+      "id": "ga-prop-tax-100",
+      "state": "GA",
+      "category": "property-tax",
+      "name": "Complete Property Tax Exemption (100% Disabled)",
+      "description": "Veterans with 100% VA disability rating receive full homestead exemption from property taxes. Exemption value varies by county.",
+      "estimatedValue": "$3,500–$15,000/year (varies by county)",
+      "eligibility": [
+        { "field": "disabilityRating", "operator": "eq", "value": 100 },
+        { "field": "residency", "operator": "true", "value": true },
+        { "field": "characterOfDischarge", "operator": "in", "value": ["Honorable", "General (Under Honorable)"] }
+      ],
+      "sourceUrl": "https://dor.georgia.gov/tax-exemptions-veterans",
+      "lastUpdated": "2026-04-01",
+      "notes": "Full homestead exemption for 100% service-connected disabled veterans. Bad conduct discharge may disqualify."
+    },
+    {
+      "id": "ga-prop-tax-partial",
+      "state": "GA",
+      "category": "property-tax",
+      "name": "Partial Property Tax Exemption (Disabled Veterans)",
+      "description": "Veterans with service-connected disability receive a $89,348 homestead exemption from property taxes.",
+      "estimatedValue": "$2,000–$8,000/year",
+      "eligibility": [
+        { "field": "disabilityRating", "operator": "gte", "value": 10 },
+        { "field": "residency", "operator": "true", "value": true },
+        { "field": "characterOfDischarge", "operator": "in", "value": ["Honorable", "General (Under Honorable)"] }
+      ],
+      "sourceUrl": "https://dor.georgia.gov/tax-exemptions-veterans",
+      "lastUpdated": "2026-04-01",
+      "notes": "$89,348 exemption requires service-connected disability rating. Updated amount as of 2026."
+    },
+    {
+      "id": "ga-vehicle-ad-valorem",
+      "state": "GA",
+      "category": "income-tax",
+      "name": "Vehicle Ad Valorem Tax Exemption (100% Disabled)",
+      "description": "Veterans with 100% disability rating are exempt from vehicle ad valorem tax on one personally owned vehicle.",
+      "estimatedValue": "$400–$1,200/year",
+      "eligibility": [
+        { "field": "disabilityRating", "operator": "eq", "value": 100 },
+        { "field": "residency", "operator": "true", "value": true },
+        { "field": "characterOfDischarge", "operator": "in", "value": ["Honorable", "General (Under Honorable)"] }
+      ],
+      "sourceUrl": "https://dor.georgia.gov/motor-vehicle-taxes",
+      "lastUpdated": "2026-04-01",
+      "notes": "Exemption applies to one vehicle titled and registered in Georgia. Requires 100% disability rating."
+    },
+    {
+      "id": "ga-license-plate",
+      "state": "GA",
+      "category": "recreation",
+      "name": "Free Veteran Specialty License Plate",
+      "description": "Disabled veterans receive free specialty veteran license plates. Also available: POW and Purple Heart plates.",
+      "estimatedValue": "Free plate (saves ~$27 initial fee)",
+      "eligibility": [
+        { "field": "disabilityRating", "operator": "gte", "value": 10 },
+        { "field": "residency", "operator": "true", "value": true }
+      ],
+      "sourceUrl": "https://dps.georgia.gov/public-safety/georgia-license-plates",
+      "lastUpdated": "2026-04-01",
+      "notes": "Distinctive plates for disabled veterans, POW, and Purple Heart recipients. Free issuance and renewal."
+    },
+    {
+      "id": "ga-hunting-fishing",
+      "state": "GA",
+      "category": "recreation",
+      "name": "Free Hunting and Fishing License",
+      "description": "Veterans with 50% or higher service-connected disability rating receive a free lifetime hunting and fishing license.",
+      "estimatedValue": "$85–$110/year",
+      "eligibility": [
+        { "field": "disabilityRating", "operator": "gte", "value": 50 },
+        { "field": "residency", "operator": "true", "value": true }
+      ],
+      "sourceUrl": "https://www.gadnr.org/hunting-fishing-licenses",
+      "lastUpdated": "2026-04-01",
+      "notes": "Lifetime license for 50%+ disabled veterans. Honorary license available. Issued by Georgia Department of Natural Resources."
+    },
+    {
+      "id": "ga-vect",
+      "state": "GA",
+      "category": "education",
+      "name": "Georgia Veterans Education Career Transition (VECT)",
+      "description": "State tuition waiver for eligible Georgia veterans at Georgia public colleges and universities.",
+      "estimatedValue": "Up to $4,000–$10,000/year in tuition waived",
+      "eligibility": [
+        { "field": "characterOfDischarge", "operator": "in", "value": ["Honorable", "General (Under Honorable)"] },
+        { "field": "residency", "operator": "true", "value": true }
+      ],
+      "sourceUrl": "https://www.usg.edu/financial-aid/vect",
+      "lastUpdated": "2026-04-01",
+      "notes": "Tuition waiver for eligible veterans at University System of Georgia institutions. Based on eligibility criteria and enrollment status."
+    },
+    {
+      "id": "ga-retirement-exclusion",
+      "state": "GA",
+      "category": "income-tax",
+      "name": "State Income Tax Retirement Exclusion",
+      "description": "Military retirement pay excluded from Georgia state income tax: up to $35,000 (ages 62–64) or up to $65,000 (age 65+).",
+      "estimatedValue": "$1,400–$2,600/year (depending on tax bracket)",
+      "eligibility": [
+        { "field": "militaryRetirementIncome", "operator": "true", "value": true }
+      ],
+      "sourceUrl": "https://dor.georgia.gov/individual-income-tax",
+      "lastUpdated": "2026-04-01",
+      "notes": "Military retirement income exclusion: $35,000 (age 62–64), $65,000 (age 65+). No residency requirement for this benefit."
+    },
+    {
+      "id": "ga-employment-preference",
+      "state": "GA",
+      "category": "employment",
+      "name": "State Employment Preference",
+      "description": "Georgia gives hiring preference to veterans in state civil service positions.",
+      "estimatedValue": "Preference in hiring process",
+      "eligibility": [
+        { "field": "characterOfDischarge", "operator": "in", "value": ["Honorable", "General (Under Honorable)"] }
+      ],
+      "sourceUrl": "https://www.doas.ga.gov/human-resources",
+      "lastUpdated": "2026-04-01",
+      "notes": "Veterans receive preference points or priority consideration in Georgia state employment hiring."
+    },
+    {
+      "id": "ga-state-veterans-home",
+      "state": "GA",
+      "category": "housing-care",
+      "name": "Georgia War Veterans Home",
+      "description": "Long-term care facility for eligible Georgia veterans. Locations in Milledgeville and Augusta.",
+      "estimatedValue": "Subsidized care (cost varies)",
+      "eligibility": [
+        { "field": "characterOfDischarge", "operator": "in", "value": ["Honorable", "General (Under Honorable)"] },
+        { "field": "residency", "operator": "true", "value": true }
+      ],
+      "sourceUrl": "https://www.ga.gov/veterans-services",
+      "lastUpdated": "2026-04-01",
+      "notes": "State-operated veteran homes providing long-term care for eligible Georgia resident veterans. Honorable or General discharge required."
+    }
+  ]
+}

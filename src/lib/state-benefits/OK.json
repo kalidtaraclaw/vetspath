@@ -1,0 +1,140 @@
+{
+  "state": "OK",
+  "stateName": "Oklahoma",
+  "lastUpdated": "2026-04-01",
+  "benefits": [
+    {
+      "id": "ok-prop-tax-100",
+      "state": "OK",
+      "category": "property-tax",
+      "name": "Complete Property Tax Exemption (100% Disabled)",
+      "description": "Veterans with 100% VA disability rating receive full exemption from property taxes on their homestead.",
+      "estimatedValue": "$3,000–$12,000/year",
+      "eligibility": [
+        { "field": "disabilityRating", "operator": "eq", "value": 100 },
+        { "field": "residency", "operator": "true", "value": true }
+      ],
+      "sourceUrl": "https://tax.ok.gov/individuals/property-tax-exemptions",
+      "lastUpdated": "2026-04-01",
+      "notes": "Full homestead exemption for 100% service-connected disabled veterans."
+    },
+    {
+      "id": "ok-prop-tax-partial",
+      "state": "OK",
+      "category": "property-tax",
+      "name": "Partial Property Tax Exemption (Disabled Veterans)",
+      "description": "Veterans with service-connected disability receive up to $1,500 per year property tax exemption. Requires Honorable or General discharge.",
+      "estimatedValue": "$1,500/year",
+      "eligibility": [
+        { "field": "disabilityRating", "operator": "gte", "value": 10 },
+        { "field": "residency", "operator": "true", "value": true },
+        { "field": "characterOfDischarge", "operator": "in", "value": ["Honorable", "General (Under Honorable)"] }
+      ],
+      "sourceUrl": "https://tax.ok.gov/individuals/property-tax-exemptions",
+      "lastUpdated": "2026-04-01",
+      "notes": "Up to $1,500/year exemption for disabled veterans. Requires Honorable or General discharge."
+    },
+    {
+      "id": "ok-registry-bonus",
+      "state": "OK",
+      "category": "income-tax",
+      "name": "Oklahoma Veterans Registry Bonus",
+      "description": "Cash bonus payments for Oklahoma resident veterans who served in eligible conflicts (Vietnam, Iraq, Afghanistan, etc.).",
+      "estimatedValue": "$300–$1,200 (one-time or annual)",
+      "eligibility": [
+        { "field": "serviceConflict", "operator": "in", "value": ["Vietnam", "Iraq", "Afghanistan", "Persian Gulf", "OEF", "OIF"] },
+        { "field": "residency", "operator": "true", "value": true }
+      ],
+      "sourceUrl": "https://www.ok.gov/veteranscommission/Oklahoma_Veterans_Registry",
+      "lastUpdated": "2026-04-01",
+      "notes": "Cash bonus for Oklahoma resident veterans who served in eligible conflicts. Amount and eligibility vary by conflict and service dates."
+    },
+    {
+      "id": "ok-vehicle-registration",
+      "state": "OK",
+      "category": "income-tax",
+      "name": "Free Vehicle Registration (100% Disabled or Former POW)",
+      "description": "Veterans with 100% disability rating or former prisoners of war receive free vehicle registration.",
+      "estimatedValue": "$150–$350/year",
+      "eligibility": [
+        { "field": "disabilityRating", "operator": "eq", "value": 100 },
+        { "field": "residency", "operator": "true", "value": true }
+      ],
+      "sourceUrl": "https://www.ok.gov/tax/",
+      "lastUpdated": "2026-04-01",
+      "notes": "Free registration for 100% disabled or POW status. Applies to one vehicle registered in Oklahoma."
+    },
+    {
+      "id": "ok-income-tax-exemption",
+      "state": "OK",
+      "category": "income-tax",
+      "name": "State Income Tax Exemption (Military Retirement)",
+      "description": "Military retirement pay is fully exempt from Oklahoma state income tax.",
+      "estimatedValue": "$1,000–$3,000/year",
+      "eligibility": [
+        { "field": "militaryRetirementIncome", "operator": "true", "value": true }
+      ],
+      "sourceUrl": "https://www.ok.gov/tax/individuals/income-tax",
+      "lastUpdated": "2026-04-01",
+      "notes": "Full exemption from state income tax on military retirement pay. No residency requirement for this benefit."
+    },
+    {
+      "id": "ok-hunting-fishing",
+      "state": "OK",
+      "category": "recreation",
+      "name": "Free Hunting and Fishing License",
+      "description": "Veterans with 50% or higher service-connected disability, or age 60+ with any disability rating, receive a free lifetime hunting and fishing combo license.",
+      "estimatedValue": "$75–$100/year",
+      "eligibility": [
+        { "field": "disabilityRating", "operator": "gte", "value": 50 },
+        { "field": "residency", "operator": "true", "value": true }
+      ],
+      "sourceUrl": "https://www.wildlifedepartment.ok.gov/hunting-fishing-licenses",
+      "lastUpdated": "2026-04-01",
+      "notes": "Lifetime combo license for 50%+ disabled or veterans age 60+ with any disability. Free issuance and renewal."
+    },
+    {
+      "id": "ok-employment-preference",
+      "state": "OK",
+      "category": "employment",
+      "name": "State Employment Preference",
+      "description": "Oklahoma gives preference points to veterans in state civil service hiring.",
+      "estimatedValue": "Preference in hiring process",
+      "eligibility": [
+        { "field": "characterOfDischarge", "operator": "in", "value": ["Honorable", "General (Under Honorable)"] }
+      ],
+      "sourceUrl": "https://www.omes.ok.gov/human-resources",
+      "lastUpdated": "2026-04-01",
+      "notes": "Veterans receive preference points or priority consideration in Oklahoma state employment hiring."
+    },
+    {
+      "id": "ok-veterans-centers",
+      "state": "OK",
+      "category": "employment",
+      "name": "Oklahoma Veterans Centers",
+      "description": "State-operated veteran centers providing benefits counseling, employment assistance, and veteran resources.",
+      "estimatedValue": "Free benefits counseling and services",
+      "eligibility": [
+        { "field": "residency", "operator": "true", "value": true }
+      ],
+      "sourceUrl": "https://www.ok.gov/veteranscommission/",
+      "lastUpdated": "2026-04-01",
+      "notes": "Multiple centers statewide providing benefits navigation, employment services, and veteran support programs."
+    },
+    {
+      "id": "ok-prop-tax-war-veterans",
+      "state": "OK",
+      "category": "property-tax",
+      "name": "Property Tax Exemption (Wartime Veterans)",
+      "description": "Additional property tax exemption available for Oklahoma veterans who served during designated wartime periods.",
+      "estimatedValue": "$500–$2,000/year",
+      "eligibility": [
+        { "field": "serviceWartime", "operator": "true", "value": true },
+        { "field": "residency", "operator": "true", "value": true }
+      ],
+      "sourceUrl": "https://tax.ok.gov/individuals/property-tax-exemptions",
+      "lastUpdated": "2026-04-01",
+      "notes": "Additional exemption for wartime service. Qualifies for various wartime conflict periods."
+    }
+  ]
+}
