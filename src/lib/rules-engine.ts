@@ -15,6 +15,8 @@ export interface DD214Data {
   remarks: string;
   narrativeReason: string;
   totalServiceMonths?: number;
+  // Service Number (Block 4b) / DOD ID Number — used on some VA forms
+  serviceNumber?: string;
   // Personal info — SSN (Block 3), DOB (Block 5), contact info
   ssn?: string;
   dob?: string;

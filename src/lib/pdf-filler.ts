@@ -102,6 +102,7 @@ function parseSSN(ssnStr: string | undefined): { first: string; middle: string; 
 
 /**
  * Parse a name and return { first, middle, last, middleInitial }
+ * Supports both "Last, First Middle" (DD-214 format) and "First Middle Last" formats
  */
 function parseName(fullName: string | undefined): {
   first: string;
@@ -111,14 +112,27 @@ function parseName(fullName: string | undefined): {
 } {
   if (!fullName) return { first: '', middle: '', last: '', middleInitial: '' };
 
-  const parts = fullName.trim().split(/\s+/);
-  if (parts.length === 0) return { first: '', middle: '', last: '', middleInitial: '' };
+  const trimmed = fullName.trim();
+  let first = '';
+  let middle = '';
+  let last = '';
 
-  const first = parts[0];
-  const last = parts.length > 1 ? parts[parts.length - 1] : '';
-  const middleParts = parts.slice(1, parts.length - 1);
-  const middle = middleParts.join(' ');
-  const middleInitial = middle ? middle.split(' ')[0].charAt(0).toUpperCase() : '';
+  if (trimmed.includes(',')) {
+    // "Last, First Middle" format (DD-214 standard)
+    const [lastPart, ...rest] = trimmed.split(',');
+    last = lastPart.trim();
+    const remaining = rest.join(',').trim().split(/\s+/);
+    first = remaining[0] || '';
+    middle = remaining.slice(1).join(' ').replace(/\.$/, ''); // remove trailing period (e.g. "J." → "J")
+  } else {
+    // "First Middle Last" format
+    const parts = trimmed.split(/\s+/);
+    first = parts[0] || '';
+    last = parts.length > 1 ? parts[parts.length - 1] : '';
+    middle = parts.slice(1, parts.length - 1).join(' ');
+  }
+
+  const middleInitial = middle ? middle.charAt(0).toUpperCase() : '';
 
   return { first, middle, last, middleInitial };
 }
@@ -229,6 +243,8 @@ async function fillForm21_0966(
     'Telephone_Number_SecondThreeNumbers[0]': phoneInfo.middle,
     'Telephone_Number_LastFourNumbers[0]': phoneInfo.last,
     'EMAIL_ADDRESS[0]': dd214.email || '',
+    'Veterans_Service_Number[0]': dd214.serviceNumber || '',
+    'VA_File_Number[0]': dd214.serviceNumber || '',
   };
 
   for (const [fieldName, value] of Object.entries(fieldMap)) {
@@ -282,6 +298,8 @@ async function fillForm21_526EZ(
     'Telephone_Middle_Three_Numbers[0]': phoneInfo.middle,
     'Telephone_Last_Four_Numbers[0]': phoneInfo.last,
     'Email_Address_Optional[0]': dd214.email,
+    'VA_File_Number[0]': dd214.serviceNumber || '',
+    'Veterans_Service_Number_If_Applicable[0]': dd214.serviceNumber || '',
     'Beginning_Date_Month[0]': entryInfo.month,
     'Beginning_Date_Day[0]': entryInfo.day,
     'Beginning_Date_Year[0]': entryInfo.year,
@@ -369,6 +387,7 @@ async function fillForm10_10EZ(
     'HOMEPhone[0]': formattedPhone,
     'EmailAddress[0]': dd214.email,
     'LastBranchOfService[0]': dd214.branch,
+    'MilitaryServiceNumber[0]': dd214.serviceNumber || '',
     'LASTENTRYDATE[0]': dd214.enteredActiveDuty || '',
     'LASTDISCHARGEDATE[0]': dd214.separationDate || '',
     'DischargeType[0]': dd214.characterOfDischarge,
@@ -501,6 +520,7 @@ async function fillForm26_1880(
     'DateOfBirth[0]': formattedDOB,
     'TelephoneNumber[0]': formattedPhone,
     'Email[0]': dd214.email,
+    'ServiceNumber[0]': dd214.serviceNumber || '',
     'BranchOfService11A1[0]': dd214.branch,
     'DateEntered11A1[0]': formattedEntry,
     'DateSeparated11A1[0]': formattedSep,

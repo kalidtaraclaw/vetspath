@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { DD214Data, QuestionnaireData } from "@/lib/rules-engine";
-import { fillVAForm } from "@/lib/pdf-filler";
+import { fillVAForm, PDF_FILES } from "@/lib/pdf-filler";
 
 // ─── BRAND COLORS ───────────────────────────────────────────────────────
 
@@ -54,6 +54,12 @@ export default function FormPreFill({
   // Extract form number from "VA Form 21-526EZ" -> "21-526EZ"
   const stripFormPrefix = (form: string): string => {
     return form.replace(/^VA Form\s+/, "");
+  };
+
+  // Check if a form has PDF auto-fill support
+  const hasPdfSupport = (form: string): boolean => {
+    const formNumber = stripFormPrefix(form);
+    return formNumber in PDF_FILES;
   };
 
   // Fill a VA form and open it in a new tab
@@ -153,6 +159,7 @@ export default function FormPreFill({
               formStates[formData.form] || { loading: false, filled: false }
             }
             onFillAndOpen={() => handleFillAndOpen(formData)}
+            pdfSupported={hasPdfSupport(formData.form)}
           />
         ))}
       </div>
@@ -204,9 +211,10 @@ interface FormCardProps {
   };
   state: FormState;
   onFillAndOpen: () => void;
+  pdfSupported: boolean;
 }
 
-function FormCard({ formData, state, onFillAndOpen }: FormCardProps) {
+function FormCard({ formData, state, onFillAndOpen, pdfSupported }: FormCardProps) {
   const getPriorityColor = (priority: string): string => {
     const p = priority.toUpperCase();
     if (p === "FILE FIRST") return "#DC2626";
@@ -339,38 +347,67 @@ function FormCard({ formData, state, onFillAndOpen }: FormCardProps) {
       )}
 
       {/* Action Button */}
-      <button
-        onClick={onFillAndOpen}
-        disabled={state.loading}
-        style={{
-          backgroundColor: state.filled ? "#10B981" : brand.azure,
-          color: brand.white,
-          border: "none",
-          padding: "12px 16px",
-          borderRadius: "6px",
-          fontSize: "14px",
-          fontWeight: "600",
-          cursor: state.loading ? "not-allowed" : "pointer",
-          opacity: state.loading ? 0.7 : 1,
-          transition: "background-color 0.2s ease",
-        }}
-        onMouseEnter={(e) => {
-          if (!state.loading) {
-            const bg = state.filled ? "#059669" : brand.royal;
+      {pdfSupported ? (
+        <button
+          onClick={onFillAndOpen}
+          disabled={state.loading}
+          style={{
+            backgroundColor: state.filled ? "#10B981" : brand.azure,
+            color: brand.white,
+            border: "none",
+            padding: "12px 16px",
+            borderRadius: "6px",
+            fontSize: "14px",
+            fontWeight: "600",
+            cursor: state.loading ? "not-allowed" : "pointer",
+            opacity: state.loading ? 0.7 : 1,
+            transition: "background-color 0.2s ease",
+          }}
+          onMouseEnter={(e) => {
+            if (!state.loading) {
+              const bg = state.filled ? "#059669" : brand.royal;
+              (e.currentTarget as HTMLButtonElement).style.backgroundColor = bg;
+            }
+          }}
+          onMouseLeave={(e) => {
+            const bg = state.filled ? "#10B981" : brand.azure;
             (e.currentTarget as HTMLButtonElement).style.backgroundColor = bg;
-          }
-        }}
-        onMouseLeave={(e) => {
-          const bg = state.filled ? "#10B981" : brand.azure;
-          (e.currentTarget as HTMLButtonElement).style.backgroundColor = bg;
-        }}
-      >
-        {state.loading
-          ? "Filling Form..."
-          : state.filled
-            ? "Open Again"
-            : "Fill & Open Form →"}
-      </button>
+          }}
+        >
+          {state.loading
+            ? "Filling Form..."
+            : state.filled
+              ? "Open Again"
+              : "Fill & Open Form →"}
+        </button>
+      ) : (
+        <a
+          href={`https://www.va.gov/find-forms/about-form-${formData.form.replace(/^VA Form\s+/, "").toLowerCase()}/`}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            display: "block",
+            backgroundColor: brand.midnight,
+            color: brand.white,
+            border: "none",
+            padding: "12px 16px",
+            borderRadius: "6px",
+            fontSize: "14px",
+            fontWeight: "600",
+            textAlign: "center",
+            textDecoration: "none",
+            transition: "background-color 0.2s ease",
+          }}
+          onMouseEnter={(e) => {
+            (e.currentTarget as HTMLAnchorElement).style.backgroundColor = brand.royal;
+          }}
+          onMouseLeave={(e) => {
+            (e.currentTarget as HTMLAnchorElement).style.backgroundColor = brand.midnight;
+          }}
+        >
+          View on VA.gov →
+        </a>
+      )}
     </div>
   );
 }
