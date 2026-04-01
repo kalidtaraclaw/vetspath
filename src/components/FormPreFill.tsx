@@ -2,11 +2,7 @@
 
 import { useState } from "react";
 import type { DD214Data, QuestionnaireData } from "@/lib/rules-engine";
-import {
-  fillForm,
-  type VeteranProfile,
-  type FormFillResult,
-} from "@/lib/pdf-filler";
+import { getFormConfig } from "@/lib/form-field-maps";
 
 // ─── BRAND COLORS ───────────────────────────────────────────────────────
 
@@ -36,13 +32,30 @@ interface FormPreFillProps {
   }>;
 }
 
-// ─── STATE INTERFACES ───────────────────────────────────────────────────
+// ─── HELPER: resolve a dot-notation source field to a value ─────────────
 
-interface FormState {
-  loading: boolean;
-  result?: FormFillResult;
-  error?: string;
-  downloaded: boolean;
+function resolveField(
+  sourceField: string,
+  dd214: DD214Data,
+  questionnaire: QuestionnaireData,
+): string | undefined {
+  if (!sourceField || sourceField === "auto." || sourceField.startsWith("auto.")) {
+    return undefined;
+  }
+
+  const [source, ...rest] = sourceField.split(".");
+  const key = rest.join(".");
+
+  if (source === "dd214") {
+    const val = (dd214 as unknown as Record<string, unknown>)[key];
+    return val ? String(val) : undefined;
+  }
+  if (source === "questionnaire") {
+    const val = (questionnaire as unknown as Record<string, unknown>)[key];
+    if (typeof val === "boolean") return val ? "Yes" : "No";
+    return val ? String(val) : undefined;
+  }
+  return undefined;
 }
 
 // ─── COMPONENT ──────────────────────────────────────────────────────────
@@ -52,127 +65,44 @@ export default function FormPreFill({
   questionnaire,
   recommendedForms,
 }: FormPreFillProps) {
-  const [formStates, setFormStates] = useState<Record<string, FormState>>({});
-  const [downloadingAll, setDownloadingAll] = useState(false);
-
-  // Build veteran profile from props
-  const veteranProfile: VeteranProfile = {
-    dd214,
-    questionnaire,
-  };
-
   // Extract form number from "VA Form 21-526EZ" -> "21-526EZ"
   const stripFormPrefix = (form: string): string => {
     return form.replace(/^VA Form\s+/, "");
   };
 
-  // Handle individual form generation and download
-  const handlePreFillForm = async (formData: (typeof recommendedForms)[0]) => {
-    const formId = formData.form;
-    const formNumber = stripFormPrefix(formData.form);
+  // Build data summary for a given form
+  const getFormDataSummary = (formNumber: string) => {
+    const config = getFormConfig(formNumber);
+    if (!config) return { ready: [], missing: [], onlineUrl: undefined, totalFields: 0 };
 
-    // Set loading state
-    setFormStates((prev) => ({
-      ...prev,
-      [formId]: { loading: true, error: undefined, downloaded: false },
-    }));
+    const ready: Array<{ label: string; value: string }> = [];
+    const missing: string[] = [];
 
-    try {
-      // Call fillForm with the veteran profile
-      const result = await fillForm(formNumber, veteranProfile);
-
-      // Update state with result
-      setFormStates((prev) => ({
-        ...prev,
-        [formId]: {
-          loading: false,
-          result,
-          error: undefined,
-          downloaded: false,
-        },
-      }));
-
-      // Trigger download
-      downloadPDF(result.pdfBytes, `VA_Form_${formNumber}.pdf`);
-
-      // Mark as downloaded
-      setFormStates((prev) => ({
-        ...prev,
-        [formId]: { ...prev[formId], downloaded: true },
-      }));
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : "Failed to generate form";
-      setFormStates((prev) => ({
-        ...prev,
-        [formId]: {
-          loading: false,
-          error: errorMessage,
-          downloaded: false,
-        },
-      }));
-    }
-  };
-
-  // Handle download all forms
-  const handleDownloadAll = async () => {
-    setDownloadingAll(true);
-
-    try {
-      for (const form of recommendedForms) {
-        const formId = form.form;
-        const formNumber = stripFormPrefix(form.form);
-
-        // Skip if already downloaded
-        if (formStates[formId]?.downloaded) {
-          continue;
-        }
-
-        try {
-          const result = await fillForm(formNumber, veteranProfile);
-
-          // Trigger download
-          downloadPDF(result.pdfBytes, `VA_Form_${formNumber}.pdf`);
-
-          // Update state
-          setFormStates((prev) => ({
-            ...prev,
-            [formId]: {
-              loading: false,
-              result,
-              error: undefined,
-              downloaded: true,
-            },
-          }));
-        } catch (err) {
-          const errorMessage =
-            err instanceof Error ? err.message : "Failed to generate form";
-          setFormStates((prev) => ({
-            ...prev,
-            [formId]: {
-              loading: false,
-              error: errorMessage,
-              downloaded: false,
-            },
-          }));
-        }
+    for (const mapping of config.fieldMappings) {
+      // Skip auto/signature fields — those are filled at submission time
+      if (
+        mapping.sourceField.startsWith("auto.") ||
+        mapping.sourceField === "auto." ||
+        mapping.label.toLowerCase().includes("signature") ||
+        mapping.label.toLowerCase().includes("date signed")
+      ) {
+        continue;
       }
-    } finally {
-      setDownloadingAll(false);
-    }
-  };
 
-  // Helper to trigger PDF download
-  const downloadPDF = (pdfBytes: Uint8Array, filename: string) => {
-    const blob = new Blob([new Uint8Array(pdfBytes)], { type: "application/pdf" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+      const value = resolveField(mapping.sourceField, dd214, questionnaire);
+      if (value) {
+        ready.push({ label: mapping.label, value });
+      } else if (mapping.required) {
+        missing.push(mapping.label);
+      }
+    }
+
+    return {
+      ready,
+      missing,
+      onlineUrl: config.onlineUrl,
+      totalFields: config.fieldMappings.length,
+    };
   };
 
   return (
@@ -194,7 +124,7 @@ export default function FormPreFill({
             margin: "0 0 8px 0",
           }}
         >
-          📋 Pre-Fill Your VA Forms
+          📋 Start Your VA Forms Online
         </h2>
         <p
           style={{
@@ -203,7 +133,7 @@ export default function FormPreFill({
             margin: "0",
           }}
         >
-          We'll auto-fill your information from your DD-214 and questionnaire
+          Your data is ready — click to open each form on VA.gov and use the cheat sheet to fill it in
         </p>
       </div>
 
@@ -211,79 +141,27 @@ export default function FormPreFill({
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))",
+          gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))",
           gap: "20px",
           marginBottom: "28px",
         }}
       >
-        {recommendedForms.map((formData) => (
-          <FormCard
-            key={formData.form}
-            formData={formData}
-            state={formStates[formData.form] || { loading: false, downloaded: false }}
-            onPreFill={() => handlePreFillForm(formData)}
-          />
-        ))}
+        {recommendedForms.map((formData) => {
+          const formNumber = stripFormPrefix(formData.form);
+          const summary = getFormDataSummary(formNumber);
+          return (
+            <FormCard
+              key={formData.form}
+              formData={formData}
+              readyFields={summary.ready}
+              missingFields={summary.missing}
+              onlineUrl={summary.onlineUrl}
+            />
+          );
+        })}
       </div>
 
-      {/* Download All Button */}
-      {recommendedForms.length > 1 && (
-        <div style={{ marginBottom: "28px" }}>
-          <button
-            onClick={handleDownloadAll}
-            disabled={downloadingAll}
-            style={{
-              backgroundColor: brand.azure,
-              color: brand.white,
-              border: "none",
-              padding: "12px 24px",
-              borderRadius: "8px",
-              fontSize: "14px",
-              fontWeight: "600",
-              cursor: downloadingAll ? "not-allowed" : "pointer",
-              opacity: downloadingAll ? 0.7 : 1,
-              transition: "background-color 0.2s ease",
-            }}
-            onMouseEnter={(e) => {
-              if (!downloadingAll) {
-                (e.currentTarget as HTMLButtonElement).style.backgroundColor =
-                  brand.royal;
-              }
-            }}
-            onMouseLeave={(e) => {
-              (e.currentTarget as HTMLButtonElement).style.backgroundColor =
-                brand.azure;
-            }}
-          >
-            {downloadingAll ? "Generating All Forms..." : "Download All Forms"}
-          </button>
-        </div>
-      )}
-
-      {/* Personal Info Note */}
-      <div
-        style={{
-          backgroundColor: "#FEF3C7",
-          borderLeft: `4px solid ${brand.orange}`,
-          padding: "16px",
-          borderRadius: "8px",
-          marginBottom: "20px",
-        }}
-      >
-        <p
-          style={{
-            fontSize: "13px",
-            color: "#92400E",
-            margin: "0",
-            lineHeight: "1.5",
-          }}
-        >
-          <strong>Manual fields needed:</strong> Some fields (SSN, date of birth, address) will need to be filled in
-          manually on the downloaded forms to protect your privacy.
-        </p>
-      </div>
-
-      {/* Disclaimer */}
+      {/* VA.gov Tip */}
       <div
         style={{
           backgroundColor: "#E3F2FD",
@@ -294,25 +172,14 @@ export default function FormPreFill({
       >
         <p
           style={{
-            fontSize: "12px",
+            fontSize: "13px",
             color: "#1565C0",
             margin: "0",
             lineHeight: "1.5",
           }}
         >
-          These are pre-filled drafts. Always submit the official VA form from
-          {" "}
-          <a
-            href="https://www.va.gov/find-forms/"
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              color: "#1565C0",
-              textDecoration: "underline",
-            }}
-          >
-            va.gov/find-forms/
-          </a>
+          <strong>Tip:</strong> Sign in to VA.gov with your ID.me or Login.gov account and the VA will pre-fill some fields automatically.
+          Your VetsPath cheat sheet covers the rest.
         </p>
       </div>
     </section>
@@ -329,11 +196,15 @@ interface FormCardProps {
     priority: string;
     benefit: string;
   };
-  state: FormState;
-  onPreFill: () => void;
+  readyFields: Array<{ label: string; value: string }>;
+  missingFields: string[];
+  onlineUrl?: string;
 }
 
-function FormCard({ formData, state, onPreFill }: FormCardProps) {
+function FormCard({ formData, readyFields, missingFields, onlineUrl }: FormCardProps) {
+  const [showCheatSheet, setShowCheatSheet] = useState(false);
+  const [copiedField, setCopiedField] = useState<string | null>(null);
+
   const getPriorityColor = (priority: string): string => {
     const p = priority.toUpperCase();
     if (p === "FILE FIRST") return "#DC2626";
@@ -348,6 +219,20 @@ function FormCard({ formData, state, onPreFill }: FormCardProps) {
       : priorityColor === "#2563EB"
         ? "#DBEAFE"
         : "#FEF3C7";
+
+  const readyCount = readyFields.length;
+  const totalCount = readyCount + missingFields.length;
+  const readyPercent = totalCount > 0 ? Math.round((readyCount / totalCount) * 100) : 0;
+
+  const handleCopy = async (value: string, label: string) => {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopiedField(label);
+      setTimeout(() => setCopiedField(null), 1500);
+    } catch {
+      // Fallback: do nothing if clipboard API not available
+    }
+  };
 
   return (
     <div
@@ -419,6 +304,20 @@ function FormCard({ formData, state, onPreFill }: FormCardProps) {
         >
           {formData.benefit}
         </div>
+
+        {/* Data Ready Badge */}
+        <div
+          style={{
+            backgroundColor: readyPercent >= 80 ? "#DCFCE7" : readyPercent >= 50 ? "#FEF9C3" : "#FEE2E2",
+            color: readyPercent >= 80 ? "#166534" : readyPercent >= 50 ? "#854D0E" : "#991B1B",
+            padding: "4px 10px",
+            borderRadius: "4px",
+            fontSize: "11px",
+            fontWeight: "600",
+          }}
+        >
+          {readyCount}/{totalCount} fields ready
+        </div>
       </div>
 
       {/* Description */}
@@ -433,100 +332,164 @@ function FormCard({ formData, state, onPreFill }: FormCardProps) {
         {formData.reason}
       </p>
 
-      {/* Result Summary */}
-      {state.result && (
-        <div
-          style={{
-            backgroundColor: "#F0FDF4",
-            padding: "12px",
-            borderRadius: "6px",
-            fontSize: "12px",
-            color: "#166534",
-          }}
-        >
-          <div style={{ fontWeight: "600", marginBottom: "6px" }}>
-            {state.result.filledCount} of {state.result.totalFields} fields
-            filled ({state.result.fillPercentage}%)
-          </div>
-
-          <details
-            style={{
-              cursor: "pointer",
-            }}
-          >
-            <summary
-              style={{
-                fontSize: "11px",
-                color: "#15803D",
-                fontWeight: "500",
-                userSelect: "none",
-              }}
-            >
-              Show breakdown
-            </summary>
-            <div
-              style={{
-                marginTop: "8px",
-                fontSize: "11px",
-                lineHeight: "1.6",
-              }}
-            >
-              <div>Filled: {state.result.filledCount}</div>
-              <div>Empty: {state.result.emptyCount}</div>
-            </div>
-          </details>
-        </div>
-      )}
-
-      {/* Error Message */}
-      {state.error && (
-        <div
-          style={{
-            backgroundColor: "#FEE2E2",
-            padding: "12px",
-            borderRadius: "6px",
-            fontSize: "12px",
-            color: "#991B1B",
-            lineHeight: "1.4",
-          }}
-        >
-          <strong>Error:</strong> {state.error}
-        </div>
-      )}
-
-      {/* Action Button */}
+      {/* Data Cheat Sheet Toggle */}
       <button
-        onClick={onPreFill}
-        disabled={state.loading}
+        onClick={() => setShowCheatSheet(!showCheatSheet)}
         style={{
-          backgroundColor: state.downloaded ? "#10B981" : brand.azure,
+          backgroundColor: "transparent",
+          border: `1px solid ${brand.silver}`,
+          padding: "8px 14px",
+          borderRadius: "6px",
+          fontSize: "12px",
+          fontWeight: "600",
+          color: brand.azure,
+          cursor: "pointer",
+          textAlign: "left",
+          transition: "background-color 0.15s ease",
+        }}
+        onMouseEnter={(e) => {
+          (e.currentTarget as HTMLButtonElement).style.backgroundColor = brand.ice;
+        }}
+        onMouseLeave={(e) => {
+          (e.currentTarget as HTMLButtonElement).style.backgroundColor = "transparent";
+        }}
+      >
+        {showCheatSheet ? "▾ Hide" : "▸ Show"} Your Data Cheat Sheet
+      </button>
+
+      {/* Cheat Sheet Content */}
+      {showCheatSheet && (
+        <div
+          style={{
+            backgroundColor: "#F9FAFB",
+            border: `1px solid ${brand.silver}`,
+            borderRadius: "6px",
+            padding: "14px",
+            maxHeight: "280px",
+            overflowY: "auto",
+          }}
+        >
+          {/* Ready Fields */}
+          {readyFields.length > 0 && (
+            <div style={{ marginBottom: missingFields.length > 0 ? "12px" : "0" }}>
+              <div
+                style={{
+                  fontSize: "11px",
+                  fontWeight: "700",
+                  color: "#166534",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.5px",
+                  marginBottom: "8px",
+                }}
+              >
+                ✓ Data Ready — click to copy
+              </div>
+              {readyFields.map((field) => (
+                <div
+                  key={field.label}
+                  onClick={() => handleCopy(field.value, field.label)}
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    padding: "6px 8px",
+                    borderRadius: "4px",
+                    cursor: "pointer",
+                    fontSize: "12px",
+                    lineHeight: "1.4",
+                    transition: "background-color 0.15s ease",
+                    backgroundColor: copiedField === field.label ? "#DCFCE7" : "transparent",
+                  }}
+                  onMouseEnter={(e) => {
+                    if (copiedField !== field.label) {
+                      e.currentTarget.style.backgroundColor = "#F3F4F6";
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (copiedField !== field.label) {
+                      e.currentTarget.style.backgroundColor = "transparent";
+                    }
+                  }}
+                >
+                  <span style={{ color: "#6B7280", minWidth: "120px" }}>
+                    {field.label}
+                  </span>
+                  <span
+                    style={{
+                      color: brand.midnight,
+                      fontWeight: "600",
+                      textAlign: "right",
+                      marginLeft: "8px",
+                    }}
+                  >
+                    {copiedField === field.label ? "✓ Copied!" : field.value}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Missing Fields */}
+          {missingFields.length > 0 && (
+            <div>
+              <div
+                style={{
+                  fontSize: "11px",
+                  fontWeight: "700",
+                  color: "#92400E",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.5px",
+                  marginBottom: "8px",
+                }}
+              >
+                ⚠ You'll need to provide
+              </div>
+              {missingFields.map((label) => (
+                <div
+                  key={label}
+                  style={{
+                    padding: "4px 8px",
+                    fontSize: "12px",
+                    color: "#92400E",
+                    lineHeight: "1.5",
+                  }}
+                >
+                  • {label}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Action Button — Open on VA.gov */}
+      <a
+        href={onlineUrl || `https://www.va.gov/find-forms/about-form-${formData.form.replace(/^VA Form\s+/, "").toLowerCase()}/`}
+        target="_blank"
+        rel="noopener noreferrer"
+        style={{
+          backgroundColor: brand.azure,
           color: brand.white,
           border: "none",
           padding: "10px 16px",
           borderRadius: "6px",
           fontSize: "13px",
           fontWeight: "600",
-          cursor: state.loading ? "not-allowed" : "pointer",
-          opacity: state.loading ? 0.7 : 1,
+          cursor: "pointer",
           transition: "background-color 0.2s ease",
+          textDecoration: "none",
+          textAlign: "center",
+          display: "block",
         }}
         onMouseEnter={(e) => {
-          if (!state.loading) {
-            const bg = state.downloaded ? "#059669" : brand.royal;
-            (e.currentTarget as HTMLButtonElement).style.backgroundColor = bg;
-          }
+          (e.currentTarget as HTMLAnchorElement).style.backgroundColor = brand.royal;
         }}
         onMouseLeave={(e) => {
-          const bg = state.downloaded ? "#10B981" : brand.azure;
-          (e.currentTarget as HTMLButtonElement).style.backgroundColor = bg;
+          (e.currentTarget as HTMLAnchorElement).style.backgroundColor = brand.azure;
         }}
       >
-        {state.loading
-          ? "Generating..."
-          : state.downloaded
-            ? "Download Again"
-            : "Pre-Fill & Download"}
-      </button>
+        Start Online on VA.gov →
+      </a>
     </div>
   );
 }

@@ -21,5 +21,6 @@ export interface VAFormConfig {
   autoFillableFields: number; // Count of fields we can auto-fill
   fieldMappings: FormFieldMapping[]; // Array of field mappings
   benefitCategory: string; // matches keys from EligibilityResults
-  downloadUrl: string; // VA.gov URL for official form
+  downloadUrl: string; // VA.gov URL for official paper form
+  onlineUrl?: string; // VA.gov URL for the online digital form (if available)
 }

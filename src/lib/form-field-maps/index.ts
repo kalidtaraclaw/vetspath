@@ -19,6 +19,7 @@ const FORM_21_0966: VAFormConfig = {
   autoFillableFields: 14,
   benefitCategory: 'disabilityComp',
   downloadUrl: 'https://www.va.gov/find-forms/about-form-21-0966/',
+  onlineUrl: 'https://www.va.gov/supporting-forms-for-claims/intent-to-file-form-21-0966/',
   fieldMappings: [
     // Veteran Information Section
     {
@@ -144,6 +145,7 @@ const FORM_21_526EZ: VAFormConfig = {
   autoFillableFields: 28,
   benefitCategory: 'disabilityComp',
   downloadUrl: 'https://www.va.gov/find-forms/about-form-21-526ez/',
+  onlineUrl: 'https://www.va.gov/disability/file-disability-claim-form-21-526ez/',
   fieldMappings: [
     // Veteran Identification
     {
@@ -384,6 +386,7 @@ const FORM_10_10EZ: VAFormConfig = {
   autoFillableFields: 24,
   benefitCategory: 'healthcare',
   downloadUrl: 'https://www.va.gov/find-forms/about-form-10-10ez/',
+  onlineUrl: 'https://www.va.gov/health-care/apply-for-health-care-form-10-10ez/',
   fieldMappings: [
     // Veteran Information
     {
@@ -579,6 +582,7 @@ const FORM_22_1990: VAFormConfig = {
   autoFillableFields: 20,
   benefitCategory: 'education',
   downloadUrl: 'https://www.va.gov/find-forms/about-form-22-1990/',
+  onlineUrl: 'https://www.va.gov/education/apply-for-gi-bill-form-22-1990/',
   fieldMappings: [
     // Veteran Information
     {
@@ -742,6 +746,7 @@ const FORM_26_1880: VAFormConfig = {
   autoFillableFields: 15,
   benefitCategory: 'homeLoan',
   downloadUrl: 'https://www.va.gov/find-forms/about-form-26-1880/',
+  onlineUrl: 'https://www.va.gov/housing-assistance/home-loans/request-coe-form-26-1880/',
   fieldMappings: [
     // Veteran Information
     {
