@@ -535,10 +535,15 @@ export async function fillVAForm(
     throw new Error(`Unknown form number: ${formNumber}`);
   }
 
+  // Detect basePath — on GitHub Pages the app is at /vetspath/
+  const basePath = typeof window !== 'undefined' && window.location.pathname.startsWith('/vetspath')
+    ? '/vetspath'
+    : '';
+
   // Fetch the PDF from the public directory
-  const response = await fetch(pdfPath);
+  const response = await fetch(basePath + pdfPath);
   if (!response.ok) {
-    throw new Error(`Failed to load PDF: ${formNumber} from ${pdfPath}`);
+    throw new Error(`Failed to load PDF: ${formNumber} (${response.status}) from ${basePath + pdfPath}`);
   }
 
   const pdfBytes = await response.arrayBuffer();
