@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import {
   evaluateEligibility,
   MOS_DESCRIPTIONS,
@@ -592,12 +592,17 @@ function FormsAndDocs({ results, onBack, dd214, questionnaire }: { results: Elig
 // ─── VA LOGO COMPONENT ─────────────────────────────────────────────────
 
 function VALogo() {
+  const [src, setSrc] = useState('/images/va-seal.svg');
+  useEffect(() => {
+    const basePath = window.location.pathname.startsWith('/vetspath') ? '/vetspath' : '';
+    setSrc(basePath + '/images/va-seal.svg');
+  }, []);
   return (
     <img
-      src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/Seal_of_the_U.S._Department_of_Veterans_Affairs.svg/200px-Seal_of_the_U.S._Department_of_Veterans_Affairs.svg.png"
+      src={src}
       alt="U.S. Department of Veterans Affairs Seal"
-      width={44}
-      height={44}
+      width={72}
+      height={72}
       style={{ borderRadius: '50%' }}
     />
   );
